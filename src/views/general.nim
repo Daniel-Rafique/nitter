@@ -25,7 +25,7 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
       tdiv(class="nav-item"):
         a(class="site-name", href="/"): text cfg.title
 
-      a(href="/"): img(class="site-logo", src="/logo.png", alt="Logo")
+      a(href="/"): img(class="site-logo", src="/logo.gif", alt="Logo")
 
       tdiv(class="nav-item right"):
         icon "search", title="Search", href="/search"
