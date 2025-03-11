@@ -31,7 +31,7 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
         icon "search", title="Search", href="/search"
         if cfg.enableRss and rss.len > 0:
           icon "rss-feed", title="RSS Feed", href=rss
-        icon "bird", title="Open in Twitter", href=canonical
+        icon "bird", title="Open in XS", href=canonical
         a(href="https://liberapay.com/zedeus"): verbatim lp
         icon "info", title="About", href="/about"
         icon "cog", title="Preferences", href=("/settings?referer=" & encodeUrl(path))
@@ -90,7 +90,7 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
     meta(property="og:type", content=ogType)
     meta(property="og:title", content=(if ogTitle.len > 0: ogTitle else: titleText))
     meta(property="og:description", content=stripHtml(desc))
-    meta(property="og:site_name", content="Nitter")
+    meta(property="og:site_name", content="Koynlabs")
     meta(property="og:locale", content="en_US")
 
     if banner.len > 0 and not banner.startsWith('#'):

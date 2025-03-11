@@ -58,7 +58,7 @@ proc renderUserCard*(user: User; prefs: Prefs): VNode =
 
       tdiv(class="profile-card-extra-links"):
         ul(class="profile-statlist"):
-          renderStat(user.tweets, "posts", text="Tweets")
+          renderStat(user.tweets, "posts", text="Posts")
           renderStat(user.following, "following")
           renderStat(user.followers, "followers")
           renderStat(user.likes, "likes")
@@ -96,8 +96,8 @@ proc renderBanner(banner: string): VNode =
 proc renderProtected(username: string): VNode =
   buildHtml(tdiv(class="timeline-container")):
     tdiv(class="timeline-header timeline-protected"):
-      h2: text "This account's tweets are protected."
-      p: text &"Only confirmed followers have access to @{username}'s tweets."
+      h2: text "This account's posts are protected."
+      p: text &"Only confirmed followers have access to @{username}'s posts."
 
 proc renderProfile*(profile: var Profile; prefs: Prefs; path: string): VNode =
   profile.tweets.query.fromUser = @[profile.user.username]

@@ -16,10 +16,10 @@ proc renderHeader(tweet: Tweet; retweet: string; pinned: bool; prefs: Prefs): VN
   buildHtml(tdiv):
     if pinned:
       tdiv(class="pinned"):
-        span: icon "pin", "Pinned Tweet"
+        span: icon "pin", "Pinned Post"
     elif retweet.len > 0:
       tdiv(class="retweet-header"):
-        span: icon "retweet", retweet & " retweeted"
+        span: icon "retweet", retweet & " reposted"
 
     tdiv(class="tweet-header"):
       a(class="tweet-avatar", href=("/" & tweet.user.username)):
@@ -281,7 +281,7 @@ proc renderTweet*(tweet: Tweet; prefs: Prefs; path: string; class=""; index=0;
         elif tweet.text.len > 0:
           text tweet.text
         else:
-          text "This tweet is unavailable"
+          text "This post is unavailable"
 
       if tweet.quote.isSome:
         renderQuote(tweet.quote.get(), prefs, path)
