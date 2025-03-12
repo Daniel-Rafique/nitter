@@ -9,7 +9,7 @@ import packedjson
 # OpenAI API key - in production, this should be securely stored
 let openaiApiKey = getEnv("OPENAI_API_KEY", "")
 
-proc fetchKoynlabsData*(query: string): Future[JsonNode] {.async.} =
+proc fetchKoynlabsData*(query: string): Future[json.JsonNode] {.async.} =
   let client = newAsyncHttpClient()
   client.headers = newHttpHeaders({"Content-Type": "application/json"})
   
@@ -20,9 +20,9 @@ proc fetchKoynlabsData*(query: string): Future[JsonNode] {.async.} =
   let body = await response.body
   
   # Parse JSON response
-  result = parseJson(body)
+  result = json.parseJson(body)
 
-proc processWithOpenAI*(query: string, koynData: JsonNode): Future[seq[string]] {.async.} =
+proc processWithOpenAI*(query: string, koynData: json.JsonNode): Future[seq[string]] {.async.} =
   if openaiApiKey.len == 0:
     # If no API key is provided, return a simple response
     return @["I found some information about " & query & " but I need an OpenAI API key to process it properly."]
@@ -34,11 +34,11 @@ proc processWithOpenAI*(query: string, koynData: JsonNode): Future[seq[string]] 
   })
   
   # Extract relevant data from Koynlabs response
-  var items: JsonNode
-  if hasKey(koynData, "data") and hasKey(koynData["data"], "items"):
+  var items: json.JsonNode
+  if koynData.hasKey("data") and koynData["data"].hasKey("items"):
     items = koynData["data"]["items"]
   else:
-    items = parseJson("[]")
+    items = json.parseJson("[]")
   
   # Prepare a simplified version of the data for OpenAI
   var simplifiedItemsArray: seq[string] = @[]
@@ -47,14 +47,14 @@ proc processWithOpenAI*(query: string, koynData: JsonNode): Future[seq[string]] 
     if count >= 10:  # Limit to 10 items to avoid token limits
       break
     
-    if hasKey(item, "title") and hasKey(item, "creator") and hasKey(item, "pubDate"):
+    if item.hasKey("title") and item.hasKey("creator") and item.hasKey("pubDate"):
       var simplifiedItem = "{" &
-        "\"title\": \"" & getStr(item["title"]) & "\"," &
-        "\"creator\": \"" & getStr(item["creator"]) & "\"," &
-        "\"pubDate\": \"" & getStr(item["pubDate"]) & "\""
+        "\"title\": \"" & item["title"].getStr() & "\"," &
+        "\"creator\": \"" & item["creator"].getStr() & "\"," &
+        "\"pubDate\": \"" & item["pubDate"].getStr() & "\""
       
-      if hasKey(item, "description"):
-        simplifiedItem &= ",\"description\": \"" & getStr(item["description"]) & "\""
+      if item.hasKey("description"):
+        simplifiedItem &= ",\"description\": \"" & item["description"].getStr() & "\""
       else:
         simplifiedItem &= ",\"description\": \"\""
       
@@ -83,13 +83,13 @@ proc processWithOpenAI*(query: string, koynData: JsonNode): Future[seq[string]] 
   try:
     let response = await client.post("https://api.openai.com/v1/chat/completions", promptJson)
     let body = await response.body
-    let jsonResponse = parseJson(body)
+    let jsonResponse = json.parseJson(body)
     
-    if hasKey(jsonResponse, "choices") and len(jsonResponse["choices"]) > 0 and 
-       hasKey(jsonResponse["choices"][0], "message") and 
-       hasKey(jsonResponse["choices"][0]["message"], "content"):
+    if jsonResponse.hasKey("choices") and jsonResponse["choices"].len > 0 and 
+       jsonResponse["choices"][0].hasKey("message") and 
+       jsonResponse["choices"][0]["message"].hasKey("content"):
       
-      let content = getStr(jsonResponse["choices"][0]["message"]["content"])
+      let content = jsonResponse["choices"][0]["message"]["content"].getStr()
       # Split the content into smaller chunks for streaming
       var chunks: seq[string] = @[]
       var currentChunk = ""
@@ -142,22 +142,22 @@ proc createOpenBBRouter*(cfg: Config) =
       }
       
       # Parse the request body
-      var reqBody: JsonNode
+      var reqBody: json.JsonNode
       try:
-        reqBody = parseJson(request.body)
+        reqBody = json.parseJson(request.body)
       except:
         resp Http400, headers, "event: error\ndata: {\"message\":\"Invalid JSON request\"}\n\n"
         return
       
       # Extract the query from the messages
       var query = ""
-      if hasKey(reqBody, "messages") and len(reqBody["messages"]) > 0:
+      if reqBody.hasKey("messages") and reqBody["messages"].len > 0:
         # Use direct index instead of BackwardsIndex (^1)
-        let lastIndex = len(reqBody["messages"]) - 1
+        let lastIndex = reqBody["messages"].len - 1
         let lastMessage = reqBody["messages"][lastIndex]
-        if hasKey(lastMessage, "role") and getStr(lastMessage["role"]) == "human" and
-           hasKey(lastMessage, "content"):
-          query = getStr(lastMessage["content"])
+        if lastMessage.hasKey("role") and lastMessage["role"].getStr() == "human" and
+           lastMessage.hasKey("content"):
+          query = lastMessage["content"].getStr()
       
       if query.len == 0:
         resp Http400, headers, "event: error\ndata: {\"message\":\"No query found in request\"}\n\n"
@@ -167,7 +167,7 @@ proc createOpenBBRouter*(cfg: Config) =
       var responseContent = "event: copilotStatusUpdate\ndata: {\"status\":\"Searching for real-time crypto information...\"}\n\n"
       
       # Fetch data from Koynlabs API
-      var koynData: JsonNode
+      var koynData: json.JsonNode
       try:
         koynData = await fetchKoynlabsData(query)
       except:
@@ -186,7 +186,7 @@ proc createOpenBBRouter*(cfg: Config) =
           responseContent.add("event: copilotMessageChunk\ndata: {\"delta\":\"" & $c & "\"}\n\n")
       
       # Add citations if there are items
-      if hasKey(koynData, "data") and hasKey(koynData["data"], "items") and len(koynData["data"]["items"]) > 0:
+      if koynData.hasKey("data") and koynData["data"].hasKey("items") and koynData["data"]["items"].len > 0:
         let items = koynData["data"]["items"]
         var citationsArray: seq[string] = @[]
         var count = 0
@@ -195,17 +195,17 @@ proc createOpenBBRouter*(cfg: Config) =
           if count >= 5:  # Limit to 5 citations
             break
             
-          if hasKey(item, "title") and hasKey(item, "creator") and hasKey(item, "link"):
+          if item.hasKey("title") and item.hasKey("creator") and item.hasKey("link"):
             var citation = "{" &
-              "\"title\": \"" & getStr(item["title"]) & "\"," &
-              "\"url\": \"" & getStr(item["link"]) & "\""
+              "\"title\": \"" & item["title"].getStr() & "\"," &
+              "\"url\": \"" & item["link"].getStr() & "\""
             
-            if hasKey(item, "pubDate"):
-              citation &= ",\"date\": \"" & getStr(item["pubDate"]) & "\""
+            if item.hasKey("pubDate"):
+              citation &= ",\"date\": \"" & item["pubDate"].getStr() & "\""
             else:
               citation &= ",\"date\": \"\""
             
-            citation &= ",\"source\": \"" & getStr(item["creator"]) & "\""
+            citation &= ",\"source\": \"" & item["creator"].getStr() & "\""
             citation &= "}"
             
             citationsArray.add(citation)
