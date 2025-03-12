@@ -186,12 +186,12 @@ proc renderSearch*(req: Request; query: string; params: Query; cfg: Config): Fut
 
   let
     rss = genRss(query, searchParams)
+    canonical = getTwitterLink(req.path, req.params)
     html = buildHtml(html(lang="en")):
-      renderHead(prefs, cfg, req, title, desc, "", @[], "", ogTitle, rss, path)
+      renderHead(prefs, cfg, req, title, desc, "", @[], "", ogTitle, rss, canonical)
 
       body:
-        renderNav(prefs.getString("theme"))
-        renderHeading(query, params)
+        renderNavbar(cfg, req, rss, canonical)
 
         tdiv(class="container"):
           if aiSearch and aiResultsNode != nil:
@@ -201,8 +201,6 @@ proc renderSearch*(req: Request; query: string; params: Query; cfg: Config): Fut
             verbatim(result)
           else:
             renderError("No results for this search")
-
-        renderFooter(prefs, req.getPath())
 
   return $html
 
