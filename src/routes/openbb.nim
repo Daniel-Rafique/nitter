@@ -193,7 +193,7 @@ proc createOpenBBRouter*(cfg: Config) =
       
       # Parse the request body as a raw string
       let reqBody = request.body
-      logDebug("Request body: " & reqBody[0..min(200, reqBody.len-1)] & "...")
+      # logDebug("Request body: " & reqBody[0..min(200, reqBody.len-1)] & "...")
       
       # Extract the query from the messages using simple string operations with improved robustness
       var query = ""
@@ -227,7 +227,7 @@ proc createOpenBBRouter*(cfg: Config) =
               query = query.replace("\\t", "\t")
               query = query.replace("\\\\", "\\")
       
-      logDebug("Extracted query: " & query)
+      # logDebug("Extracted query: " & query)
       
       if query.len == 0:
         logDebug("No query found in request")
@@ -263,5 +263,5 @@ proc createOpenBBRouter*(cfg: Config) =
         responseContent.add("event: copilotMessageChunk\ndata: {\"delta\":\"" & escapeJsonString($c) & "\"}\n\n")
       
       # Send the complete response
-      logDebug("Sending response with length: " & $responseContent.len)
+      # logDebug("Sending response with length: " & $responseContent.len)
       resp Http200, headers, responseContent 
