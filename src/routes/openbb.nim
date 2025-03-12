@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-import asyncdispatch, strutils, httpclient, asynchttpserver, os, times
-import std/json  # Changed to use std/json which provides the %* operator
+import asyncdispatch, json, strutils, httpclient, asynchttpserver, os, times
 import jester
 import router_utils
 import ".."/[types, config, formatters]
@@ -12,7 +11,7 @@ proc fetchKoynlabsData*(query: string): Future[JsonNode] {.async.} =
   let client = newAsyncHttpClient()
   client.headers = newHttpHeaders({"Content-Type": "application/json"})
   
-  let payload = %*{"query": query}
+  let payload = parseJson("""{"query": """" & query & """"}""")
   let response = await client.post("https://api.koynlabs.com:3443/api/search", $payload)
   let body = await response.body
   
@@ -42,18 +41,22 @@ proc processWithOpenAI*(query: string, koynData: JsonNode): Future[seq[string]] 
       break
     
     if item.hasKey("title") and item.hasKey("creator") and item.hasKey("pubDate"):
-      let simplifiedItem = %*{
-        "title": item["title"].getStr(),
-        "creator": item["creator"].getStr(),
-        "pubDate": item["pubDate"].getStr(),
-        "description": if item.hasKey("description"): item["description"].getStr() else: ""
+      let simplifiedItemJson = """
+      {
+        "title": """" & item["title"].getStr() & """",
+        "creator": """" & item["creator"].getStr() & """",
+        "pubDate": """" & item["pubDate"].getStr() & """",
+        "description": """" & (if item.hasKey("description"): item["description"].getStr() else: "") & """"
       }
+      """
+      let simplifiedItem = parseJson(simplifiedItemJson)
       simplifiedItems.add(simplifiedItem)
     
     count += 1
   
   # Create the OpenAI API request
-  let prompt = %*{
+  let promptJson = """
+  {
     "model": "gpt-3.5-turbo",
     "messages": [
       {
@@ -62,12 +65,14 @@ proc processWithOpenAI*(query: string, koynData: JsonNode): Future[seq[string]] 
       },
       {
         "role": "user",
-        "content": "I want to know about " & query & ". Here is some real-time data from social media and news sources: " & $simplifiedItems
+        "content": "I want to know about """ & query & """. Here is some real-time data from social media and news sources: """ & $simplifiedItems & """"
       }
     ],
     "temperature": 0.7,
     "max_tokens": 500
   }
+  """
+  let prompt = parseJson(promptJson)
   
   try:
     let response = await client.post("https://api.openai.com/v1/chat/completions", $prompt)
@@ -103,18 +108,21 @@ proc createOpenBBRouter*(cfg: Config) =
   router openbb:
     get "/copilots.json":
       # Serve the copilots.json configuration file
-      let copilotConfig = %*{
+      let copilotConfigJson = """
+      {
         "koynlabs_copilot": {
           "name": "Koynlabs Crypto Copilot",
           "description": "AI-powered crypto insights using real-time data from Koynlabs API.",
-          "image": getUrlPrefix(cfg) & "/logo.jpg",
+          "image": """ & getUrlPrefix(cfg) & """/logo.jpg",
           "hasStreaming": true,
           "hasFunctionCalling": true,
           "endpoints": {
-            "query": getUrlPrefix(cfg) & "/openbb/query"
+            "query": """ & getUrlPrefix(cfg) & """/openbb/query"
           }
         }
       }
+      """
+      let copilotConfig = parseJson(copilotConfigJson)
       
       resp Http200, {"Content-Type": "application/json"}, $copilotConfig
 
@@ -180,20 +188,26 @@ proc createOpenBBRouter*(cfg: Config) =
             break
             
           if item.hasKey("title") and item.hasKey("creator") and item.hasKey("link"):
-            let citation = %*{
-              "title": item["title"].getStr(),
-              "url": item["link"].getStr(),
-              "date": if item.hasKey("pubDate"): item["pubDate"].getStr() else: "",
-              "source": item["creator"].getStr()
+            let citationJson = """
+            {
+              "title": """" & item["title"].getStr() & """",
+              "url": """" & item["link"].getStr() & """",
+              "date": """" & (if item.hasKey("pubDate"): item["pubDate"].getStr() else: "") & """",
+              "source": """" & item["creator"].getStr() & """"
             }
+            """
+            let citation = parseJson(citationJson)
             citations.add(citation)
               
           count += 1
         
         if citations.len > 0:
-          let citationCollection = %*{
-            "citations": citations
+          let citationCollectionJson = """
+          {
+            "citations": """ & $citations & """
           }
+          """
+          let citationCollection = parseJson(citationCollectionJson)
           
           responseContent.add("event: copilotCitationCollection\ndata: " & $citationCollection & "\n\n")
       
