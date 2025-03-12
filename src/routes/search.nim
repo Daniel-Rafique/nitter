@@ -184,25 +184,20 @@ proc renderSearch*(req: Request; query: string; params: Query; cfg: Config): Fut
     let tweets = await getGraphTweetSearch(searchParams)
     result = $renderTweetSearch(tweets, prefs, req.getPath())
 
-  let
-    rss = genRss(query, searchParams)
-    canonical = getTwitterLink(req.path, req.params)
-    html = buildHtml(html(lang="en")):
-      renderHead(prefs, cfg, req, title, desc, "", @[], "", ogTitle, rss, canonical)
+  # Create the content node
+  let contentNode = buildHtml(tdiv):
+    tdiv(class="container"):
+      if aiSearch and aiResultsNode != nil:
+        aiResultsNode
+      
+      if result.len > 0:
+        verbatim(result)
+      else:
+        renderError("No results for this search")
 
-      body:
-        renderNavbar(cfg, req, rss, canonical)
-
-        tdiv(class="container"):
-          if aiSearch and aiResultsNode != nil:
-            aiResultsNode
-          
-          if result.len > 0:
-            verbatim(result)
-          else:
-            renderError("No results for this search")
-
-  return $html
+  # Use renderMain which handles the navbar and other common elements
+  let rss = genRss(query, searchParams)
+  return renderMain(contentNode, req, cfg, prefs, title, desc, ogTitle, rss)
 
 proc createSearchRouter*(cfg: Config) =
   router search:
