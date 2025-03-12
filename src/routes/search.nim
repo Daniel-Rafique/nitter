@@ -142,7 +142,7 @@ proc renderAiSearchResults*(query: string, koynData: JsonNode, sentiment: tuple[
     tdiv(class="ai-search-footer"):
       p: text "Data sourced from Koynlabs API"
 
-proc renderSearch*(req: Request; query: string; params: QueryParams): Future[string] {.async.} =
+proc renderSearch*(req: Request; query: string; params: Query): Future[string] {.async.} =
   let
     prefs = cookiePrefs(req.cookies)
     title = query & " - Twitter Search"

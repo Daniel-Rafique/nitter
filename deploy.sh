@@ -15,7 +15,7 @@ git push
 
 echo "Changes pushed to repository."
 echo "Now connect to your server and run the following commands:"
-echo "cd /path/to/nitter"
+echo "cd /root/nitter"
 echo "git pull"
 echo "nimble build -d:release"
 echo "systemctl restart nitter.service  # If using systemd"
