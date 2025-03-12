@@ -216,8 +216,8 @@ proc createSearchRouter*(cfg: Config) =
       
       # Handle AI-powered search
       if aiSearch and q.len > 0:
-        let result = await renderSearch(request, q, query, cfg)
-        resp Http200, {"Content-Type": "text/html; charset=utf-8"}, result
+        let searchHtml = await renderSearch(request, q, query, cfg)
+        resp Http200, {"Content-Type": "text/html; charset=utf-8"}, searchHtml
       else:
         # Regular search handling
         case query.kind
