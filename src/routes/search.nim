@@ -17,6 +17,10 @@ export search
 proc getPath*(req: Request): string =
   result = $(parseUri(req.path) ? filterParams(req.params))
 
+# Helper method to get the host from a Request
+proc getHost*(req: Request): string =
+  result = req.headers.getOrDefault("Host")
+
 # Helper function to generate RSS URL for search queries
 proc genRss*(query: string; params: Query): string =
   if params.kind == tweets:
