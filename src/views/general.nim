@@ -80,11 +80,11 @@ proc renderEnhancedSearch(): VNode =
       text "Search Powered by "
       a(href="https://koyn.ai", target="_blank"): text "Koyn.ai"
       
-    tdiv(class="openbb-badge"):
-      text "Compatible with "
-      a(href="https://openbb.co/", target="_blank"):
-        img(src="/openbb-logo.svg", alt="OpenBB Logo")
-        text "OpenBB Workspace"
+    # tdiv(class="openbb-badge"):
+    #   text "Compatible with "
+    #   a(href="https://openbb.co/", target="_blank"):
+    #     img(src="/openbb-logo.svg", alt="OpenBB Logo")
+    #     text "OpenBB Workspace"
 
 proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
                  video=""; images: seq[string] = @[]; banner=""; ogTitle="";
