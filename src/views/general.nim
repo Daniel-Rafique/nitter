@@ -40,7 +40,7 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
         a(href="/search?q=DeFi", class="nav-link"): text "DeFi"
 
       tdiv(class="nav-item right"):
-        aiSearchIcon("AI Search", "/search?ai=true")
+        aiSearchIcon("AI-Powered Search", "/search?ai=true")
         if cfg.enableRss and rss.len > 0:
           icon "rss-feed", title="RSS Feed", href=rss
         icon "info", title="About", href="/about"
@@ -83,7 +83,10 @@ proc renderEnhancedSearch(): VNode =
     tdiv(class="openbb-badge"):
       text "Now compatible with "
       a(href="https://openbb.co/", target="_blank"):
-        img(src="/logo.jpg", alt="OpenBB Logo", style="height: 20px; width: auto;")
+        img(src="/logo.jpg", alt="OpenBB Logo", style = style(
+          (StyleAttr.height, "20px"),
+          (StyleAttr.width, "auto")
+        ))
         text "OpenBB Workspace"
       
     p(class="openbb-info"):
