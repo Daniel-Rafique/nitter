@@ -7,7 +7,7 @@ import ".."/[types, config, formatters]
 # OpenAI API key - in production, this should be securely stored
 let openaiApiKey = getEnv("OPENAI_API_KEY", "")
 
-proc fetchKoynlabsData*(query: string): Future[string] {.async.} =
+proc fetchKoynlabsDataForOpenBB*(query: string): Future[string] {.async.} =
   let client = newAsyncHttpClient()
   client.headers = newHttpHeaders({"Content-Type": "application/json"})
   
@@ -135,7 +135,7 @@ proc createOpenBBRouter*(cfg: Config) =
       # Fetch data from Koynlabs API
       var koynData: string
       try:
-        koynData = await fetchKoynlabsData(query)
+        koynData = await fetchKoynlabsDataForOpenBB(query)
       except:
         resp Http500, headers, responseContent & "event: error\ndata: {\"message\":\"Failed to fetch data from Koynlabs API\"}\n\n"
         return
