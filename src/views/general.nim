@@ -35,11 +35,9 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
 
       tdiv(class="nav-item right"):
         aiSearchIcon("AI Search", "/search?ai=true")
-        icon "search", title="Search", href="/search"
         if cfg.enableRss and rss.len > 0:
           icon "rss-feed", title="RSS Feed", href=rss
         icon "bird", title="Open in Twitter", href=canonical
-        a(href="https://liberapay.com/zedeus"): verbatim lp
         icon "info", title="About", href="/about"
         icon "cog", title="Preferences", href=("/settings?referer=" & encodeUrl(path))
 
