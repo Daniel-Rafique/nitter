@@ -6,7 +6,7 @@ import karax/vstyles
 import jester
 
 import router_utils
-import ".."/[query, types, api, formatters]
+import ".."/[query, types, api, formatters, prefs]
 import ../views/[general, search]
 
 include "../views/opensearch.nimf"
@@ -144,7 +144,7 @@ proc renderAiSearchResults*(query: string, koynData: JsonNode, sentiment: tuple[
 
 proc renderSearch*(req: Request; query: string; params: Query): Future[string] {.async.} =
   let
-    prefs = cookiePrefs(req.cookies)
+    prefs = getPrefs(req.cookies)
     title = query & " - Twitter Search"
     desc = "Search Twitter for " & query
     ogTitle = query & " - Twitter Search"
