@@ -28,7 +28,7 @@ if not cfg.enableDebug:
   addHandler(newConsoleLogger())
   setLogFilter(lvlError)
 
-stdout.write &"Starting Nitter at {getUrlPrefix(cfg)}\n"
+stdout.write &"Starting Koynlabs at {getUrlPrefix(cfg)}\n"
 stdout.flushFile
 
 updateDefaultPrefs(fullCfg)

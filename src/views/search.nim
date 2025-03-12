@@ -6,7 +6,7 @@ import renderutils, timeline
 import ".."/[types, query]
 
 const toggles = {
-  "nativeretweets": "Retweets",
+  "nativeretweets": "Reposts",
   "media": "Media",
   "videos": "Videos",
   "news": "News",
@@ -24,7 +24,7 @@ proc renderSearch*(): VNode =
   buildHtml(tdiv(class="panel-container")):
     tdiv(class="search-bar"):
       form(`method`="get", action="/search", autocomplete="off"):
-        hiddenField("f", "tweets")
+        hiddenField("f", "posts")
         input(`type`="text", name="q", autofocus="",
               placeholder="Search...", dir="auto")
         button(`type`="submit"): icon "search"
@@ -33,9 +33,9 @@ proc renderProfileTabs*(query: Query; username: string): VNode =
   let link = "/" & username
   buildHtml(ul(class="tab")):
     li(class=query.getTabClass(posts)):
-      a(href=link): text "Tweets"
+      a(href=link): text "Posts"
     li(class=(query.getTabClass(replies) & " wide")):
-      a(href=(link & "/with_replies")): text "Tweets & Replies"
+      a(href=(link & "/with_replies")): text "Posts & Replies"
     li(class=query.getTabClass(media)):
       a(href=(link & "/media")): text "Media"
     li(class=query.getTabClass(tweets)):
@@ -46,7 +46,7 @@ proc renderSearchTabs*(query: Query): VNode =
   buildHtml(ul(class="tab")):
     li(class=query.getTabClass(tweets)):
       q.kind = tweets
-      a(href=("?" & genQueryUrl(q))): text "Tweets"
+      a(href=("?" & genQueryUrl(q))): text "Posts"
     li(class=query.getTabClass(users)):
       q.kind = users
       a(href=("?" & genQueryUrl(q))): text "Users"
@@ -60,7 +60,7 @@ proc renderSearchPanel*(query: Query): VNode =
   let action = if user.len > 0: &"/{user}/search" else: "/search"
   buildHtml(form(`method`="get", action=action,
                  class="search-field", autocomplete="off")):
-    hiddenField("f", "tweets")
+    hiddenField("f", "posts")
     genInput("q", "", query.text, "Enter search...", class="pref-inline")
     button(`type`="submit"): icon "search"
 
