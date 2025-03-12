@@ -4,15 +4,20 @@ import jester
 import router_utils
 import ".."/[types, config, formatters]
 
-# OpenAI API key - in production, this should be securely stored
-let openaiApiKey = getEnv("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", "")
-
 # Enable debug logging
 const DEBUG = true
 
 proc logDebug(msg: string) =
   if DEBUG:
     echo "[DEBUG] " & msg
+
+# OpenAI API key - get from environment variable
+let openaiApiKey = getEnv("OPENAI_API_KEY", "")
+if openaiApiKey.len == 0:
+  echo "WARNING: OPENAI_API_KEY environment variable is not set. OpenAI functionality will be limited."
+  echo "Set it using: export OPENAI_API_KEY=\"your-api-key-here\""
+else:
+  echo "OpenAI API key found with length: ", openaiApiKey.len
 
 proc escapeJsonString(s: string): string =
   result = ""
@@ -55,8 +60,15 @@ proc processWithOpenAI*(query: string, koynData: string): Future[seq[string]] {.
   
   if openaiApiKey.len == 0:
     logDebug("No OpenAI API key provided")
-    # If no API key is provided, return a simple response
-    return @["I found some information about " & query & " but I need an OpenAI API key to process it properly."]
+    # If no API key is provided, return a more helpful response
+    return @[
+      "I found information about " & query & " but I need an OpenAI API key to process it properly.\n\n",
+      "To set up the OpenAI API key:\n",
+      "1. Get an API key from https://platform.openai.com/api-keys\n",
+      "2. Set it as an environment variable before starting the server:\n",
+      "   export OPENAI_API_KEY=\"your-api-key-here\"\n",
+      "3. Restart the server and try again."
+    ]
   
   let client = newAsyncHttpClient()
   client.headers = newHttpHeaders({
