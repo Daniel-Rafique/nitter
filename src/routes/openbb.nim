@@ -4,6 +4,11 @@ import jester
 import router_utils
 import ".."/[types, config]
 
+# Helper function to get the URL prefix based on the configuration
+proc getUrlPrefix*(cfg: Config): string =
+  if cfg.useHttps: "https://" & cfg.hostname
+  else: "http://" & cfg.hostname
+
 # OpenAI API key - in production, this should be securely stored
 let openaiApiKey = getEnv("OPENAI_API_KEY", "")
 
