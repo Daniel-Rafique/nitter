@@ -248,6 +248,8 @@ proc createSearchRouter*(cfg: Config) =
       redirect("/search?q=" & encodeUrl("#" & @"hash"))
 
     get "/opensearch":
-      let url = getUrlPrefix(cfg) & "/search?q="
+      # Construct URL directly without using getUrlPrefix
+      let protocol = if cfg.useHttps: "https://" else: "http://"
+      let url = protocol & cfg.hostname & "/search?q="
       resp Http200, {"Content-Type": "application/opensearchdescription+xml"},
                      generateOpenSearchXML(cfg.title, cfg.hostname, url)
