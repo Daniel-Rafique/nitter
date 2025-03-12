@@ -151,8 +151,8 @@ nav {
 .ai-indicator {
   position: absolute;
   top: -8px;
-  right: -8px;
-  background: var(--koyn-secondary);
+  right: -30px;
+  /* background: var(--koyn-secondary); */
   color: var(--koyn-bg);
   font-size: 0.7rem;
   font-weight: 700;
@@ -209,8 +209,8 @@ nav {
   position: relative;
   margin-bottom: var(--space-xl);
   max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
+  margin: auto;
+
 }
 
 .enhanced-search-form input[type="text"] {
@@ -232,9 +232,9 @@ nav {
   transform: translateY(-2px);
 }
 
-.search-button {
+search-button {
   position: absolute;
-  right: 8px;
+  right: -80px;
   top: 50%;
   transform: translateY(-50%);
   background: var(--koyn-primary);
@@ -242,7 +242,8 @@ nav {
   border-radius: var(--radius-full);
   width: 2.5rem;
   height: 2.5rem;
-  display: flex;
+  display: flex
+;
   align-items: center;
   justify-content: center;
   cursor: pointer;
