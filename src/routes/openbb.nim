@@ -1,41 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-import strutils, tables, options, asyncdispatch, httpclient, asynchttpserver, os, times
+import strutils, asyncdispatch, httpclient, asynchttpserver, os, times
 import jester
 import router_utils
 import ".."/[types, config, formatters]
-import re
 
 # OpenAI API key - in production, this should be securely stored
 let openaiApiKey = getEnv("OPENAI_API_KEY", "")
 
-type
-  SimpleJsonNode = object
-    jsonStr: string
-
-proc parseJson(data: string): SimpleJsonNode =
-  result.jsonStr = data
-
-proc extractValue(json: SimpleJsonNode, key: string): string =
-  # Very simple JSON key extraction - not robust but should work for our needs
-  let pattern = "\"" & key & "\"\\s*:\\s*\"([^\"]*)\"" 
-  var matches: array[1, string]
-  if json.jsonStr.match(re(pattern), matches):
-    return matches[0]
-  return ""
-
-proc extractArrayValue(json: SimpleJsonNode, key: string): SimpleJsonNode =
-  # Very simple JSON array extraction - not robust but should work for our needs
-  let pattern = "\"" & key & "\"\\s*:\\s*(\\[[^\\]]*\\])"
-  var matches: array[1, string]
-  if json.jsonStr.match(re(pattern), matches):
-    result.jsonStr = matches[0]
-  else:
-    result.jsonStr = "[]"
-
-proc hasKey(json: SimpleJsonNode, key: string): bool =
-  return json.jsonStr.contains("\"" & key & "\"")
-
-proc fetchKoynlabsData*(query: string): Future[SimpleJsonNode] {.async.} =
+proc fetchKoynlabsData*(query: string): Future[string] {.async.} =
   let client = newAsyncHttpClient()
   client.headers = newHttpHeaders({"Content-Type": "application/json"})
   
@@ -45,10 +17,10 @@ proc fetchKoynlabsData*(query: string): Future[SimpleJsonNode] {.async.} =
   let response = await client.post("https://api.koynlabs.com:3443/api/search", payload)
   let body = await response.body
   
-  # Parse JSON response
-  result = parseJson(body)
+  # Return the raw JSON response
+  return body
 
-proc processWithOpenAI*(query: string, koynData: SimpleJsonNode): Future[seq[string]] {.async.} =
+proc processWithOpenAI*(query: string, koynData: string): Future[seq[string]] {.async.} =
   if openaiApiKey.len == 0:
     # If no API key is provided, return a simple response
     return @["I found some information about " & query & " but I need an OpenAI API key to process it properly."]
@@ -59,21 +31,9 @@ proc processWithOpenAI*(query: string, koynData: SimpleJsonNode): Future[seq[str
     "Authorization": "Bearer " & openaiApiKey
   })
   
-  # Extract relevant data from Koynlabs response
-  var itemsJson: SimpleJsonNode
-  if koynData.hasKey("data"):
-    let dataJson = extractArrayValue(koynData, "data")
-    if dataJson.hasKey("items"):
-      itemsJson = extractArrayValue(dataJson, "items")
-    else:
-      itemsJson = parseJson("[]")
-  else:
-    itemsJson = parseJson("[]")
-  
-  # For simplicity, we'll just pass the raw JSON to OpenAI
   # Create the OpenAI API request
   let systemContent = "You are a helpful assistant that provides insights about cryptocurrency based on real-time data. Analyze the provided data and give a concise, informative summary about the query. Focus on key trends, important news, and relevant insights. Format your response in markdown with bullet points for clarity."
-  let userContent = "I want to know about " & query & ". Here is some real-time data from social media and news sources: " & itemsJson.jsonStr
+  let userContent = "I want to know about " & query & ". Here is some real-time data from social media and news sources: " & koynData
   
   # Create JSON payload using string template
   let promptJson = "{" &
@@ -89,11 +49,15 @@ proc processWithOpenAI*(query: string, koynData: SimpleJsonNode): Future[seq[str
   try:
     let response = await client.post("https://api.openai.com/v1/chat/completions", promptJson)
     let body = await response.body
-    let jsonResponse = parseJson(body)
     
-    if jsonResponse.hasKey("choices"):
-      let content = extractValue(jsonResponse, "content")
-      if content.len > 0:
+    # Extract content using simple string operations
+    let contentStart = body.find("\"content\":\"")
+    if contentStart > 0:
+      let contentStartIndex = contentStart + 11 # Length of "content":"
+      let contentEndIndex = body.find("\"", contentStartIndex)
+      if contentEndIndex > contentStartIndex:
+        let content = body[contentStartIndex..<contentEndIndex]
+        
         # Split the content into smaller chunks for streaming
         var chunks: seq[string] = @[]
         var currentChunk = ""
@@ -145,26 +109,21 @@ proc createOpenBBRouter*(cfg: Config) =
         "Access-Control-Allow-Origin": "*"
       }
       
-      # Parse the request body
-      var reqBody: SimpleJsonNode
-      try:
-        reqBody = parseJson(request.body)
-      except:
-        resp Http400, headers, "event: error\ndata: {\"message\":\"Invalid JSON request\"}\n\n"
-        return
+      # Parse the request body as a raw string
+      let reqBody = request.body
       
-      # Extract the query from the messages
+      # Extract the query from the messages using simple string operations
       var query = ""
-      if reqBody.hasKey("messages"):
-        # Extract the last message content
-        let messagesStr = reqBody.jsonStr
-        let lastMessageStart = messagesStr.rfind("{\"role\"")
-        if lastMessageStart >= 0:
-          let messageSubstr = messagesStr[lastMessageStart..^1]
-          let messageJson = parseJson(messageSubstr)
-          if messageJson.hasKey("role") and extractValue(messageJson, "role") == "human" and
-             messageJson.hasKey("content"):
-            query = extractValue(messageJson, "content")
+      let messagesStart = reqBody.find("\"messages\":")
+      if messagesStart > 0:
+        let lastRoleHumanStart = reqBody.rfind("\"role\":\"human\"")
+        if lastRoleHumanStart > 0:
+          let contentStart = reqBody.find("\"content\":\"", lastRoleHumanStart)
+          if contentStart > 0:
+            let contentStartIndex = contentStart + 11 # Length of "content":"
+            let contentEndIndex = reqBody.find("\"", contentStartIndex)
+            if contentEndIndex > contentStartIndex:
+              query = reqBody[contentStartIndex..<contentEndIndex]
       
       if query.len == 0:
         resp Http400, headers, "event: error\ndata: {\"message\":\"No query found in request\"}\n\n"
@@ -174,7 +133,7 @@ proc createOpenBBRouter*(cfg: Config) =
       var responseContent = "event: copilotStatusUpdate\ndata: {\"status\":\"Searching for real-time crypto information...\"}\n\n"
       
       # Fetch data from Koynlabs API
-      var koynData: SimpleJsonNode
+      var koynData: string
       try:
         koynData = await fetchKoynlabsData(query)
       except:
