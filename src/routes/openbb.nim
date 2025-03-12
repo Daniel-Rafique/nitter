@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 import strutils, tables, options, asyncdispatch, httpclient, asynchttpserver, os, times
-import std/json
+import std/json as stdJson
 import jester
 import router_utils
 import ".."/[types, config, formatters]
@@ -9,7 +9,7 @@ import packedjson
 # OpenAI API key - in production, this should be securely stored
 let openaiApiKey = getEnv("OPENAI_API_KEY", "")
 
-proc fetchKoynlabsData*(query: string): Future[json.JsonNode] {.async.} =
+proc fetchKoynlabsData*(query: string): Future[stdJson.JsonNode] {.async.} =
   let client = newAsyncHttpClient()
   client.headers = newHttpHeaders({"Content-Type": "application/json"})
   
@@ -20,9 +20,9 @@ proc fetchKoynlabsData*(query: string): Future[json.JsonNode] {.async.} =
   let body = await response.body
   
   # Parse JSON response
-  result = json.parseJson(body)
+  result = stdJson.parseJson(body)
 
-proc processWithOpenAI*(query: string, koynData: json.JsonNode): Future[seq[string]] {.async.} =
+proc processWithOpenAI*(query: string, koynData: stdJson.JsonNode): Future[seq[string]] {.async.} =
   if openaiApiKey.len == 0:
     # If no API key is provided, return a simple response
     return @["I found some information about " & query & " but I need an OpenAI API key to process it properly."]
@@ -34,11 +34,11 @@ proc processWithOpenAI*(query: string, koynData: json.JsonNode): Future[seq[stri
   })
   
   # Extract relevant data from Koynlabs response
-  var items: json.JsonNode
+  var items: stdJson.JsonNode
   if koynData.hasKey("data") and koynData["data"].hasKey("items"):
     items = koynData["data"]["items"]
   else:
-    items = json.parseJson("[]")
+    items = stdJson.parseJson("[]")
   
   # Prepare a simplified version of the data for OpenAI
   var simplifiedItemsArray: seq[string] = @[]
@@ -83,7 +83,7 @@ proc processWithOpenAI*(query: string, koynData: json.JsonNode): Future[seq[stri
   try:
     let response = await client.post("https://api.openai.com/v1/chat/completions", promptJson)
     let body = await response.body
-    let jsonResponse = json.parseJson(body)
+    let jsonResponse = stdJson.parseJson(body)
     
     if jsonResponse.hasKey("choices") and jsonResponse["choices"].len > 0 and 
        jsonResponse["choices"][0].hasKey("message") and 
@@ -142,9 +142,9 @@ proc createOpenBBRouter*(cfg: Config) =
       }
       
       # Parse the request body
-      var reqBody: json.JsonNode
+      var reqBody: stdJson.JsonNode
       try:
-        reqBody = json.parseJson(request.body)
+        reqBody = stdJson.parseJson(request.body)
       except:
         resp Http400, headers, "event: error\ndata: {\"message\":\"Invalid JSON request\"}\n\n"
         return
@@ -167,7 +167,7 @@ proc createOpenBBRouter*(cfg: Config) =
       var responseContent = "event: copilotStatusUpdate\ndata: {\"status\":\"Searching for real-time crypto information...\"}\n\n"
       
       # Fetch data from Koynlabs API
-      var koynData: json.JsonNode
+      var koynData: stdJson.JsonNode
       try:
         koynData = await fetchKoynlabsData(query)
       except:
