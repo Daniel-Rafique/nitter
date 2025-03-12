@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 import strutils, tables, options, asyncdispatch, httpclient, asynchttpserver, os, times
-import packedjson
+import std/json
 import jester
 import router_utils
 import ".."/[types, config, formatters]
@@ -12,10 +12,10 @@ proc fetchKoynlabsData*(query: string): Future[JsonNode] {.async.} =
   let client = newAsyncHttpClient()
   client.headers = newHttpHeaders({"Content-Type": "application/json"})
   
-  # Create JSON payload using string interpolation
-  let payload = """{"query": "$1"}""" % query
+  # Create JSON payload
+  let payload = %* {"query": query}
   
-  let response = await client.post("https://api.koynlabs.com:3443/api/search", payload)
+  let response = await client.post("https://api.koynlabs.com:3443/api/search", $payload)
   let body = await response.body
   
   # Parse JSON response
@@ -34,68 +34,62 @@ proc processWithOpenAI*(query: string, koynData: JsonNode): Future[seq[string]] 
   
   # Extract relevant data from Koynlabs response
   var items: JsonNode
-  if hasKey(koynData, "data") and hasKey(koynData["data"], "items"):
+  if koynData.hasKey("data") and koynData["data"].hasKey("items"):
     items = koynData["data"]["items"]
   else:
     items = parseJson("[]")
   
   # Prepare a simplified version of the data for OpenAI
-  var simplifiedItemsArray: seq[string] = @[]
+  var simplifiedItems = newJArray()
   var count = 0
   for item in items:
     if count >= 10:  # Limit to 10 items to avoid token limits
       break
     
-    if hasKey(item, "title") and hasKey(item, "creator") and hasKey(item, "pubDate"):
-      let title = getStr(item["title"])
-      let creator = getStr(item["creator"])
-      let pubDate = getStr(item["pubDate"])
-      let description = if hasKey(item, "description"): getStr(item["description"]) else: ""
+    if item.hasKey("title") and item.hasKey("creator") and item.hasKey("pubDate"):
+      var simplifiedItem = newJObject()
+      simplifiedItem["title"] = %item["title"].getStr()
+      simplifiedItem["creator"] = %item["creator"].getStr()
+      simplifiedItem["pubDate"] = %item["pubDate"].getStr()
+      if item.hasKey("description"):
+        simplifiedItem["description"] = %item["description"].getStr()
+      else:
+        simplifiedItem["description"] = %""
       
-      let simplifiedItem = """{"title": "$1", "creator": "$2", "pubDate": "$3", "description": "$4"}""" % [
-        title.replace("\"", "\\\""), 
-        creator.replace("\"", "\\\""), 
-        pubDate.replace("\"", "\\\""), 
-        description.replace("\"", "\\\"")
-      ]
-      simplifiedItemsArray.add(simplifiedItem)
+      simplifiedItems.add(simplifiedItem)
     
     count += 1
   
-  let simplifiedItems = "[" & simplifiedItemsArray.join(",") & "]"
-  
   # Create the OpenAI API request
   let systemContent = "You are a helpful assistant that provides insights about cryptocurrency based on real-time data. Analyze the provided data and give a concise, informative summary about the query. Focus on key trends, important news, and relevant insights. Format your response in markdown with bullet points for clarity."
-  let userContent = "I want to know about " & query & ". Here is some real-time data from social media and news sources: " & simplifiedItems
+  let userContent = "I want to know about " & query & ". Here is some real-time data from social media and news sources: " & $simplifiedItems
   
-  let promptJson = """
-  {
+  let promptJson = %* {
     "model": "gpt-3.5-turbo",
     "messages": [
       {
         "role": "system",
-        "content": "$1"
+        "content": systemContent
       },
       {
         "role": "user",
-        "content": "$2"
+        "content": userContent
       }
     ],
     "temperature": 0.7,
     "max_tokens": 500
   }
-  """ % [systemContent.replace("\"", "\\\""), userContent.replace("\"", "\\\"")]
   
   try:
-    let response = await client.post("https://api.openai.com/v1/chat/completions", promptJson)
+    let response = await client.post("https://api.openai.com/v1/chat/completions", $promptJson)
     let body = await response.body
     let jsonResponse = parseJson(body)
     
-    if hasKey(jsonResponse, "choices") and len(jsonResponse["choices"]) > 0 and 
-       hasKey(jsonResponse["choices"][0], "message") and 
-       hasKey(jsonResponse["choices"][0]["message"], "content"):
+    if jsonResponse.hasKey("choices") and jsonResponse["choices"].len > 0 and 
+       jsonResponse["choices"][0].hasKey("message") and 
+       jsonResponse["choices"][0]["message"].hasKey("content"):
       
-      let content = getStr(jsonResponse["choices"][0]["message"]["content"])
+      let content = jsonResponse["choices"][0]["message"]["content"].getStr()
       # Split the content into smaller chunks for streaming
       var chunks: seq[string] = @[]
       var currentChunk = ""
@@ -121,22 +115,20 @@ proc createOpenBBRouter*(cfg: Config) =
     get "/copilots.json":
       # Serve the copilots.json configuration file
       let urlPrefix = getUrlPrefix(cfg)
-      let copilotConfigJson = """
-      {
+      let copilotConfig = %* {
         "koynlabs_copilot": {
           "name": "Koynlabs Crypto Copilot",
           "description": "AI-powered crypto insights using real-time data from Koynlabs API.",
-          "image": "$1/logo.jpg",
+          "image": urlPrefix & "/logo.jpg",
           "hasStreaming": true,
           "hasFunctionCalling": true,
           "endpoints": {
-            "query": "$1/openbb/query"
+            "query": urlPrefix & "/openbb/query"
           }
         }
       }
-      """ % urlPrefix
       
-      resp Http200, {"Content-Type": "application/json"}, copilotConfigJson
+      resp Http200, {"Content-Type": "application/json"}, $copilotConfig
 
     post "/openbb/query":
       # Set headers for Server-Sent Events
@@ -157,13 +149,13 @@ proc createOpenBBRouter*(cfg: Config) =
       
       # Extract the query from the messages
       var query = ""
-      if hasKey(reqBody, "messages") and len(reqBody["messages"]) > 0:
+      if reqBody.hasKey("messages") and reqBody["messages"].len > 0:
         # Use direct index instead of BackwardsIndex (^1)
-        let lastIndex = len(reqBody["messages"]) - 1
+        let lastIndex = reqBody["messages"].len - 1
         let lastMessage = reqBody["messages"][lastIndex]
-        if hasKey(lastMessage, "role") and getStr(lastMessage["role"]) == "human" and
-           hasKey(lastMessage, "content"):
-          query = getStr(lastMessage["content"])
+        if lastMessage.hasKey("role") and lastMessage["role"].getStr() == "human" and
+           lastMessage.hasKey("content"):
+          query = lastMessage["content"].getStr()
       
       if query.len == 0:
         resp Http400, headers, "event: error\ndata: {\"message\":\"No query found in request\"}\n\n"
@@ -192,48 +184,35 @@ proc createOpenBBRouter*(cfg: Config) =
           responseContent.add("event: copilotMessageChunk\ndata: {\"delta\":\"" & $c & "\"}\n\n")
       
       # Add citations if there are items
-      if hasKey(koynData, "data") and hasKey(koynData["data"], "items") and len(koynData["data"]["items"]) > 0:
+      if koynData.hasKey("data") and koynData["data"].hasKey("items") and koynData["data"]["items"].len > 0:
         let items = koynData["data"]["items"]
-        var citationsArray: seq[string] = @[]
+        var citationsArray = newJArray()
         var count = 0
         
         for item in items:
           if count >= 5:  # Limit to 5 citations
             break
             
-          if hasKey(item, "title") and hasKey(item, "creator") and hasKey(item, "link"):
-            let title = getStr(item["title"])
-            let url = getStr(item["link"])
-            let date = if hasKey(item, "pubDate"): getStr(item["pubDate"]) else: ""
-            let source = getStr(item["creator"])
+          if item.hasKey("title") and item.hasKey("creator") and item.hasKey("link"):
+            var citation = newJObject()
+            citation["title"] = %item["title"].getStr()
+            citation["url"] = %item["link"].getStr()
+            if item.hasKey("pubDate"):
+              citation["date"] = %item["pubDate"].getStr()
+            else:
+              citation["date"] = %""
+            citation["source"] = %item["creator"].getStr()
             
-            let citation = """
-            {
-              "title": "$1",
-              "url": "$2",
-              "date": "$3",
-              "source": "$4"
-            }
-            """ % [
-              title.replace("\"", "\\\""), 
-              url.replace("\"", "\\\""), 
-              date.replace("\"", "\\\""), 
-              source.replace("\"", "\\\"")
-            ]
             citationsArray.add(citation)
               
           count += 1
         
         if citationsArray.len > 0:
-          let citationCollection = """
-          {
-            "citations": [
-              $1
-            ]
+          let citationCollection = %* {
+            "citations": citationsArray
           }
-          """ % citationsArray.join(",")
           
-          responseContent.add("event: copilotCitationCollection\ndata: " & citationCollection & "\n\n")
+          responseContent.add("event: copilotCitationCollection\ndata: " & $citationCollection & "\n\n")
       
       # Add a final message about the source
       let finalMessage = "\n\nData sourced from Koynlabs API as of " & $now() & "."
