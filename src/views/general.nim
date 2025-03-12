@@ -14,6 +14,12 @@ const
 proc toTheme(theme: string): string =
   theme.toLowerAscii.replace(" ", "_")
 
+proc aiSearchIcon(title: string, href: string): VNode =
+  buildHtml(a(href=href, title=title, class="nav-item")):
+    tdiv(class="icon-search-ai"):
+      icon "search"
+      span(class="ai-indicator"): text "AI"
+
 proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
   var path = req.params.getOrDefault("referer")
   if path.len == 0:
@@ -23,11 +29,12 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
   buildHtml(nav):
     tdiv(class="inner-nav"):
       tdiv(class="nav-item"):
-        a(class="site-name", href="/"): text cfg.title
+        a(class="site-name", href="/"): text "Koynlabs"
 
-      a(href="/"): img(class="site-logo", src="/logo.jpg", alt="Logo")
+      a(href="/"): img(class="site-logo", src="/logo.jpg", alt="Koynlabs Logo")
 
       tdiv(class="nav-item right"):
+        aiSearchIcon("AI Search", "/search?ai=true")
         icon "search", title="Search", href="/search"
         if cfg.enableRss and rss.len > 0:
           icon "rss-feed", title="RSS Feed", href=rss
@@ -35,6 +42,34 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
         a(href="https://liberapay.com/zedeus"): verbatim lp
         icon "info", title="About", href="/about"
         icon "cog", title="Preferences", href=("/settings?referer=" & encodeUrl(path))
+
+proc renderTrendingTopics(): VNode =
+  buildHtml(tdiv(class="trending-topics")):
+    h3: text "Trending in Crypto"
+    ul(class="topic-list"):
+      li:
+        a(href="/search?q=Bitcoin", class="trending-topic"): text "#Bitcoin"
+      li:
+        a(href="/search?q=Ethereum", class="trending-topic"): text "#Ethereum"
+      li:
+        a(href="/search?q=Solana", class="trending-topic"): text "#Solana"
+      li:
+        a(href="/search?q=DeFi", class="trending-topic"): text "#DeFi"
+      li:
+        a(href="/search?q=NFT", class="trending-topic"): text "#NFT"
+      li:
+        a(href="/search?q=Web3", class="trending-topic"): text "#Web3"
+
+proc renderEnhancedSearch(): VNode =
+  buildHtml(tdiv(class="enhanced-search-container")):
+    form(`method`="get", action="/search", autocomplete="off", class="enhanced-search-form"):
+      hiddenField("f", "tweets")
+      input(`type`="text", name="q", autofocus="",
+            placeholder="Search Twitter for crypto content...", dir="auto")
+      button(`type`="submit", class="search-button"): 
+        icon "search"
+    
+    renderTrendingTopics()
 
 proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
                  video=""; images: seq[string] = @[]; banner=""; ogTitle="";
@@ -54,6 +89,7 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
   buildHtml(head):
     link(rel="stylesheet", type="text/css", href="/css/style.css?v=19")
     link(rel="stylesheet", type="text/css", href="/css/fontello.css?v=2")
+    link(rel="stylesheet", type="text/css", href="/css/koynlabs.css?v=1")
 
     if theme.len > 0:
       link(rel="stylesheet", type="text/css", href=(&"/css/themes/{theme}.css"))
@@ -81,9 +117,9 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
 
     title:
       if titleText.len > 0:
-        text titleText & " | " & cfg.title
+        text titleText & " | Koynlabs"
       else:
-        text cfg.title
+        text "Koynlabs Twitter Search"
 
     meta(name="viewport", content="width=device-width, initial-scale=1.0")
     meta(name="theme-color", content="#1F1F1F")
@@ -135,6 +171,9 @@ proc renderMain*(body: VNode; req: Request; cfg: Config; prefs=defaultPrefs;
       renderNavbar(cfg, req, rss, canonical)
 
       tdiv(class="container"):
+        if req.path == "/":
+          # Only show the enhanced search on the homepage
+          renderEnhancedSearch()
         body
 
   result = doctype & $node
