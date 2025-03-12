@@ -2,6 +2,9 @@
 import uri, strutils, strformat
 import karax/[karaxdsl, vdom]
 
+# Import StyleAttr from karax/vstyles
+import karax/vstyles
+
 import renderutils
 import ../utils, ../types, ../prefs, ../formatters
 

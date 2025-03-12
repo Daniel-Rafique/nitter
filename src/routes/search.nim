@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 import strutils, strformat, sequtils, unicode, tables, options, json, asyncdispatch, httpclient
 import karax/[karaxdsl, vdom]
+import karax/vstyles
 
 import jester
 
