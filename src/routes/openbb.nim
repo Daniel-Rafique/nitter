@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-import strutils, tables, options, json, asyncdispatch, httpclient, asynchttpserver, os, times
+import strutils, tables, options, asyncdispatch, httpclient, asynchttpserver, os, times
+import std/json
 import jester
 import router_utils
 import ".."/[types, config, formatters]
@@ -11,8 +12,9 @@ proc fetchKoynlabsData*(query: string): Future[JsonNode] {.async.} =
   let client = newAsyncHttpClient()
   client.headers = newHttpHeaders({"Content-Type": "application/json"})
   
-  # Create JSON payload using standard json module
-  let payload = %*{"query": query}
+  # Create JSON payload manually
+  var payload = newJObject()
+  payload["query"] = newJString(query)
   
   let response = await client.post("https://api.koynlabs.com:3443/api/search", $payload)
   let body = await response.body
@@ -44,32 +46,37 @@ proc processWithOpenAI*(query: string, koynData: JsonNode): Future[seq[string]] 
       break
     
     if item.hasKey("title") and item.hasKey("creator") and item.hasKey("pubDate"):
-      let simplifiedItem = %*{
-        "title": item["title"].getStr(),
-        "creator": item["creator"].getStr(),
-        "pubDate": item["pubDate"].getStr(),
-        "description": if item.hasKey("description"): item["description"].getStr() else: ""
-      }
+      var simplifiedItem = newJObject()
+      simplifiedItem["title"] = newJString(item["title"].getStr())
+      simplifiedItem["creator"] = newJString(item["creator"].getStr())
+      simplifiedItem["pubDate"] = newJString(item["pubDate"].getStr())
+      if item.hasKey("description"):
+        simplifiedItem["description"] = newJString(item["description"].getStr())
+      else:
+        simplifiedItem["description"] = newJString("")
       simplifiedItems.add(simplifiedItem)
     
     count += 1
   
   # Create the OpenAI API request
-  let prompt = %*{
-    "model": "gpt-3.5-turbo",
-    "messages": [
-      {
-        "role": "system",
-        "content": "You are a helpful assistant that provides insights about cryptocurrency based on real-time data. Analyze the provided data and give a concise, informative summary about the query. Focus on key trends, important news, and relevant insights. Format your response in markdown with bullet points for clarity."
-      },
-      {
-        "role": "user",
-        "content": "I want to know about " & query & ". Here is some real-time data from social media and news sources: " & $simplifiedItems
-      }
-    ],
-    "temperature": 0.7,
-    "max_tokens": 500
-  }
+  var prompt = newJObject()
+  prompt["model"] = newJString("gpt-3.5-turbo")
+  
+  var messages = newJArray()
+  
+  var systemMsg = newJObject()
+  systemMsg["role"] = newJString("system")
+  systemMsg["content"] = newJString("You are a helpful assistant that provides insights about cryptocurrency based on real-time data. Analyze the provided data and give a concise, informative summary about the query. Focus on key trends, important news, and relevant insights. Format your response in markdown with bullet points for clarity.")
+  messages.add(systemMsg)
+  
+  var userMsg = newJObject()
+  userMsg["role"] = newJString("user")
+  userMsg["content"] = newJString("I want to know about " & query & ". Here is some real-time data from social media and news sources: " & $simplifiedItems)
+  messages.add(userMsg)
+  
+  prompt["messages"] = messages
+  prompt["temperature"] = newJFloat(0.7)
+  prompt["max_tokens"] = newJInt(500)
   
   try:
     let response = await client.post("https://api.openai.com/v1/chat/completions", $prompt)
@@ -105,18 +112,20 @@ proc createOpenBBRouter*(cfg: Config) =
   router openbb:
     get "/copilots.json":
       # Serve the copilots.json configuration file
-      let copilotConfig = %*{
-        "koynlabs_copilot": {
-          "name": "Koynlabs Crypto Copilot",
-          "description": "AI-powered crypto insights using real-time data from Koynlabs API.",
-          "image": getUrlPrefix(cfg) & "/logo.jpg",
-          "hasStreaming": true,
-          "hasFunctionCalling": true,
-          "endpoints": {
-            "query": getUrlPrefix(cfg) & "/openbb/query"
-          }
-        }
-      }
+      var copilotConfig = newJObject()
+      var koynlabsCopilot = newJObject()
+      
+      koynlabsCopilot["name"] = newJString("Koynlabs Crypto Copilot")
+      koynlabsCopilot["description"] = newJString("AI-powered crypto insights using real-time data from Koynlabs API.")
+      koynlabsCopilot["image"] = newJString(getUrlPrefix(cfg) & "/logo.jpg")
+      koynlabsCopilot["hasStreaming"] = newJBool(true)
+      koynlabsCopilot["hasFunctionCalling"] = newJBool(true)
+      
+      var endpoints = newJObject()
+      endpoints["query"] = newJString(getUrlPrefix(cfg) & "/openbb/query")
+      koynlabsCopilot["endpoints"] = endpoints
+      
+      copilotConfig["koynlabs_copilot"] = koynlabsCopilot
       
       resp Http200, {"Content-Type": "application/json"}, $copilotConfig
 
@@ -182,20 +191,21 @@ proc createOpenBBRouter*(cfg: Config) =
             break
             
           if item.hasKey("title") and item.hasKey("creator") and item.hasKey("link"):
-            let citation = %*{
-              "title": item["title"].getStr(),
-              "url": item["link"].getStr(),
-              "date": if item.hasKey("pubDate"): item["pubDate"].getStr() else: "",
-              "source": item["creator"].getStr()
-            }
+            var citation = newJObject()
+            citation["title"] = newJString(item["title"].getStr())
+            citation["url"] = newJString(item["link"].getStr())
+            if item.hasKey("pubDate"):
+              citation["date"] = newJString(item["pubDate"].getStr())
+            else:
+              citation["date"] = newJString("")
+            citation["source"] = newJString(item["creator"].getStr())
             citations.add(citation)
               
           count += 1
         
         if citations.len > 0:
-          let citationCollection = %*{
-            "citations": citations
-          }
+          var citationCollection = newJObject()
+          citationCollection["citations"] = citations
           
           responseContent.add("event: copilotCitationCollection\ndata: " & $citationCollection & "\n\n")
       
