@@ -124,19 +124,19 @@ proc createOpenBBRouter*(cfg: Config) =
 
     post "/openbb/query":
       # Set headers for Server-Sent Events
-      request.response.headers = {"Content-Type": "text/event-stream",
-                                 "Cache-Control": "no-cache",
-                                 "Connection": "keep-alive",
-                                 "Access-Control-Allow-Origin": "*"}
+      let headers = {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "Access-Control-Allow-Origin": "*"
+      }
       
       # Parse the request body
       var reqBody: JsonNode
       try:
         reqBody = parseJson(request.body)
       except:
-        await request.response.sendHeaders()
-        await request.response.send("event: error\ndata: {\"message\":\"Invalid JSON request\"}\n\n")
-        request.response.finish()
+        resp Http400, headers, "event: error\ndata: {\"message\":\"Invalid JSON request\"}\n\n"
         return
       
       # Extract the query from the messages
@@ -148,34 +148,30 @@ proc createOpenBBRouter*(cfg: Config) =
           query = lastMessage["content"].getStr()
       
       if query.len == 0:
-        await request.response.sendHeaders()
-        await request.response.send("event: error\ndata: {\"message\":\"No query found in request\"}\n\n")
-        request.response.finish()
+        resp Http400, headers, "event: error\ndata: {\"message\":\"No query found in request\"}\n\n"
         return
       
-      # Send a status update
-      await request.response.sendHeaders()
-      await request.response.send("event: copilotStatusUpdate\ndata: {\"status\":\"Searching for real-time crypto information...\"}\n\n")
+      # Create a custom response handler for SSE
+      var responseContent = "event: copilotStatusUpdate\ndata: {\"status\":\"Searching for real-time crypto information...\"}\n\n"
       
       # Fetch data from Koynlabs API
       var koynData: JsonNode
       try:
         koynData = await fetchKoynlabsData(query)
       except:
-        await request.response.send("event: error\ndata: {\"message\":\"Failed to fetch data from Koynlabs API\"}\n\n")
-        request.response.finish()
+        resp Http500, headers, responseContent & "event: error\ndata: {\"message\":\"Failed to fetch data from Koynlabs API\"}\n\n"
         return
       
-      # Process the data with OpenAI
-      await request.response.send("event: copilotStatusUpdate\ndata: {\"status\":\"Analyzing data with AI...\"}\n\n")
+      # Add status update
+      responseContent.add("event: copilotStatusUpdate\ndata: {\"status\":\"Analyzing data with AI...\"}\n\n")
       
+      # Process the data with OpenAI
       let processedChunks = await processWithOpenAI(query, koynData)
       
-      # Send the processed response in chunks
+      # Add the processed response chunks
       for chunk in processedChunks:
         for c in chunk:
-          await request.response.send("event: copilotMessageChunk\ndata: {\"delta\":\"" & $c & "\"}\n\n")
-          await sleepAsync(5)  # Small delay for demonstration
+          responseContent.add("event: copilotMessageChunk\ndata: {\"delta\":\"" & $c & "\"}\n\n")
       
       # Add citations if there are items
       if koynData.hasKey("data") and koynData["data"].hasKey("items") and koynData["data"]["items"].len > 0:
@@ -203,13 +199,12 @@ proc createOpenBBRouter*(cfg: Config) =
             "citations": citations
           }
           
-          await request.response.send("event: copilotCitationCollection\ndata: " & $citationCollection & "\n\n")
+          responseContent.add("event: copilotCitationCollection\ndata: " & $citationCollection & "\n\n")
       
-      # Send a final message about the source
+      # Add a final message about the source
       let finalMessage = "\n\nData sourced from Koynlabs API as of " & $now() & "."
       for c in finalMessage:
-        await request.response.send("event: copilotMessageChunk\ndata: {\"delta\":\"" & $c & "\"}\n\n")
-        await sleepAsync(5)
+        responseContent.add("event: copilotMessageChunk\ndata: {\"delta\":\"" & $c & "\"}\n\n")
       
-      # Close the connection
-      request.response.finish() 
+      # Send the complete response
+      resp Http200, headers, responseContent 
