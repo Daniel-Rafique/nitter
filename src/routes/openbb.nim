@@ -181,7 +181,7 @@ proc createOpenBBRouter*(cfg: Config) =
       resp Http200, {"Content-Type": "application/json"}, copilotConfig
 
     post "/openbb/query":
-      logDebug("Received query request")
+      # logDebug("Received query request")
       
       # Set headers for Server-Sent Events
       let headers = {
