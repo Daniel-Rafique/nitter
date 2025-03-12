@@ -374,6 +374,30 @@ nav {
   width: auto;
 }
 
+.openbb-info {
+  text-align: center;
+  margin-top: var(--space-md);
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 600px;
+  font-size: 0.875rem;
+  color: var(--koyn-text-secondary);
+  padding: var(--space-md);
+  background-color: var(--koyn-bg-panel);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--koyn-secondary);
+}
+
+.openbb-info code {
+  display: inline-block;
+  margin-top: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background-color: var(--koyn-bg-card);
+  border-radius: var(--radius-sm);
+  font-family: monospace;
+  color: var(--koyn-secondary);
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .container {
@@ -397,6 +421,13 @@ nav {
   
   .topic-list {
     grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .openbb-badge,
+  .openbb-info {
+    max-width: 100%;
+    padding-left: var(--space-sm);
+    padding-right: var(--space-sm);
   }
 }
 
@@ -432,10 +463,12 @@ nav {
   }
   
   .powered-by,
-  .openbb-badge {
+  .openbb-badge,
+  .openbb-info {
     max-width: 100%;
     padding-left: var(--space-sm);
     padding-right: var(--space-sm);
+    flex-direction: column;
   }
 }
 
