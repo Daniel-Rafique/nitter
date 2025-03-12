@@ -161,7 +161,7 @@ proc createOpenBBRouter*(cfg: Config) =
       # Serve the copilots.json configuration file
       let urlPrefix = getUrlPrefix(cfg)
       
-      logDebug("Serving copilots.json with urlPrefix: " & urlPrefix)
+      # logDebug("Serving copilots.json with urlPrefix: " & urlPrefix)
       
       # Create JSON using string template with proper escaping
       let copilotConfig = "{" &
