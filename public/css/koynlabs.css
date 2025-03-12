@@ -48,18 +48,27 @@ body {
 
 /* Modern navbar */
 nav {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 50px;
+  z-index: 1000;
   backdrop-filter: blur(8px);
-  background-color: rgba(15, 23, 42, 0.8) !important;
+  background-color: rgba(15, 23, 42, 0.9) !important;
   border-bottom: 1px solid var(--koyn-border);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
 .inner-nav {
   max-width: 1200px;
   width: 100%;
+  margin: auto;
   padding: 0 var(--space-lg);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: 50px;
 }
 
 .site-name {
@@ -105,6 +114,59 @@ nav {
   }
 }
 
+/* Nav item styling */
+.nav-item {
+  display: flex;
+  align-items: center;
+  height: 50px;
+}
+
+.nav-item.right {
+  justify-content: flex-end;
+}
+
+.nav-item.right a {
+  padding-left: var(--space-sm);
+  color: var(--koyn-text-secondary);
+}
+
+.nav-item.right a:hover {
+  color: var(--koyn-text);
+  text-decoration: none;
+}
+
+/* AI Search icon */
+.icon-search-ai {
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: var(--koyn-text-secondary);
+  font-size: 16px;
+}
+
+.ai-indicator {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: var(--koyn-secondary);
+  color: var(--koyn-bg);
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  z-index: 10;
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 80px;
+  padding-left: var(--space-lg);
+  padding-right: var(--space-lg);
+  padding-bottom: var(--space-lg);
+}
+
 /* Enhanced search container */
 .enhanced-search-container {
   display: flex;
@@ -112,8 +174,9 @@ nav {
   align-items: center;
   justify-content: center;
   max-width: 800px;
-  margin: var(--space-xxl) auto;
-  padding: 0 var(--space-lg);
+  margin: 0 auto;
+  padding: var(--space-lg);
+  padding-top: var(--space-xl);
 }
 
 .search-heading {
@@ -175,6 +238,7 @@ nav {
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
+  z-index: 1;
 }
 
 .search-button:hover {
@@ -238,32 +302,6 @@ nav {
 
 .trending-topic[href*="Solana"] {
   border-left: 3px solid var(--solana-color);
-}
-
-/* AI Search icon */
-.icon-search-ai {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.ai-indicator {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background: var(--koyn-secondary);
-  color: var(--koyn-bg);
-  font-size: 0.625rem;
-  font-weight: 700;
-  padding: 2px 4px;
-  border-radius: var(--radius-sm);
-}
-
-/* Container */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 60px var(--space-lg) var(--space-lg);
 }
 
 /* Powered by Koyn.ai badge */
