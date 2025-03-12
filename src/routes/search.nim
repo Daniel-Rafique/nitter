@@ -169,7 +169,7 @@ proc renderSearch*(req: Request; query: string; params: Query; cfg: Config): Fut
   var
     searchQuery = query
     searchParams = params
-    result = ""
+    searchResult = ""
     aiResultsNode: VNode = nil
 
   if aiSearch and query.len > 0:
@@ -182,7 +182,7 @@ proc renderSearch*(req: Request; query: string; params: Query; cfg: Config): Fut
 
   if query.len > 0:
     let tweets = await getGraphTweetSearch(searchParams)
-    result = $renderTweetSearch(tweets, prefs, req.getPath())
+    searchResult = $renderTweetSearch(tweets, prefs, req.getPath())
 
   # Create the content node
   let contentNode = buildHtml(tdiv):
@@ -190,8 +190,8 @@ proc renderSearch*(req: Request; query: string; params: Query; cfg: Config): Fut
       if aiSearch and aiResultsNode != nil:
         aiResultsNode
       
-      if result.len > 0:
-        verbatim(result)
+      if searchResult.len > 0:
+        verbatim(searchResult)
       else:
         renderError("No results for this search")
 
