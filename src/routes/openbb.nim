@@ -19,6 +19,9 @@ if openaiApiKey.len == 0:
 else:
   echo "OpenAI API key found with length: ", openaiApiKey.len
 
+# IMPORTANT: Never hardcode API keys in your code
+# Always use environment variables or secure configuration methods
+
 proc escapeJsonString(s: string): string =
   result = ""
   for c in s:
