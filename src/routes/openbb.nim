@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-import asyncdispatch, json, strutils, httpclient, asynchttpserver, os, times
+import asyncdispatch, strutils, httpclient, asynchttpserver, os, times
+import std/json  # Changed to use std/json which provides the %* operator
 import jester
 import router_utils
 import ".."/[types, config, formatters]
