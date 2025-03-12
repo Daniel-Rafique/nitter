@@ -3,6 +3,7 @@ import strutils, tables, options, asyncdispatch, httpclient, asynchttpserver, os
 import jester
 import router_utils
 import ".."/[types, config, formatters]
+import re
 
 # OpenAI API key - in production, this should be securely stored
 let openaiApiKey = getEnv("OPENAI_API_KEY", "")
@@ -18,7 +19,7 @@ proc extractValue(json: SimpleJsonNode, key: string): string =
   # Very simple JSON key extraction - not robust but should work for our needs
   let pattern = "\"" & key & "\"\\s*:\\s*\"([^\"]*)\"" 
   var matches: array[1, string]
-  if json.jsonStr.find(pattern, matches) >= 0:
+  if json.jsonStr.match(re(pattern), matches):
     return matches[0]
   return ""
 
@@ -26,7 +27,7 @@ proc extractArrayValue(json: SimpleJsonNode, key: string): SimpleJsonNode =
   # Very simple JSON array extraction - not robust but should work for our needs
   let pattern = "\"" & key & "\"\\s*:\\s*(\\[[^\\]]*\\])"
   var matches: array[1, string]
-  if json.jsonStr.find(pattern, matches) >= 0:
+  if json.jsonStr.match(re(pattern), matches):
     result.jsonStr = matches[0]
   else:
     result.jsonStr = "[]"
