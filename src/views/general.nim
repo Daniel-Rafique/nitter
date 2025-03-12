@@ -43,7 +43,6 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
         aiSearchIcon("AI Search", "/search?ai=true")
         if cfg.enableRss and rss.len > 0:
           icon "rss-feed", title="RSS Feed", href=rss
-        icon "bird", title="Open in Twitter", href=canonical
         icon "info", title="About", href="/about"
         icon "cog", title="Preferences", href=("/settings?referer=" & encodeUrl(path))
 
@@ -136,7 +135,7 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
       if titleText.len > 0:
         text titleText & " | Koynlabs"
       else:
-        text "Koynlabs Twitter Search"
+        text "Koynlabs Market Insights"
 
     meta(name="viewport", content="width=device-width, initial-scale=1.0")
     meta(name="theme-color", content="#1F1F1F")
