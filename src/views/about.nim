@@ -2,25 +2,20 @@
 import os, strformat
 import karax/[karaxdsl, vdom]
 
-const
-  date = staticExec("git show -s --format=\"%cd\" --date=format:\"%Y.%m.%d\"")
-  hash = staticExec("git show -s --format=\"%h\"")
-  link = "https://github.com/zedeus/nitter/commit/" & hash
-  version = &"{date}-{hash}"
-
 var aboutHtml: string
 
 proc initAboutPage*(dir: string) =
   try:
     aboutHtml = readFile(dir/"md/about.html")
   except IOError:
-    stderr.write (dir/"md/about.html") & " not found, please run `nimble md`\n"
+    stderr.write (dir/"md/about.html") & " not found, please check the file\n"
     aboutHtml = "<h1>About page is missing</h1><br><br>"
 
 proc renderAbout*(): VNode =
-  buildHtml(tdiv(class="overlay-panel")):
+  buildHtml(tdiv(class="overlay-panel about-panel")):
     verbatim aboutHtml
-    h2: text "Instance info"
-    p:
-      text "Version "
-      a(href=link): text version
+    tdiv(class="koynlabs-footer"):
+      h3: text "Koynlabs - Crypto Intelligence Platform"
+      p: 
+        text "© 2024 Koynlabs. All rights reserved. "
+        a(href="https://koyn.ai"): text "Visit our website"

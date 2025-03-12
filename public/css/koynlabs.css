@@ -279,6 +279,40 @@ nav {
   font-weight: 500;
 }
 
+/* OpenBB badge */
+.openbb-badge {
+  text-align: center;
+  margin-top: var(--space-md);
+  font-size: 0.875rem;
+  color: var(--koyn-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.openbb-badge a {
+  color: var(--koyn-text);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background-color: var(--koyn-bg-card);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.openbb-badge a:hover {
+  background-color: var(--koyn-primary);
+  text-decoration: none;
+}
+
+.openbb-badge img {
+  height: 20px;
+  width: auto;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .enhanced-search-container {
@@ -305,4 +339,76 @@ nav {
   .topic-list {
     grid-template-columns: 1fr;
   }
+}
+
+/* About page */
+.about-panel {
+  background-color: var(--koyn-bg-panel);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  max-width: 800px;
+  padding: var(--space-xl);
+}
+
+.about-panel h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: var(--space-md);
+  background: linear-gradient(90deg, var(--koyn-primary), var(--koyn-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: block;
+}
+
+.about-panel h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: var(--space-lg);
+  margin-bottom: var(--space-sm);
+  color: var(--koyn-text);
+  border-bottom: 1px solid var(--koyn-border);
+  padding-bottom: var(--space-xs);
+}
+
+.about-panel p {
+  line-height: 1.6;
+  margin-bottom: var(--space-md);
+}
+
+.about-panel ul {
+  margin-bottom: var(--space-md);
+}
+
+.about-panel li {
+  margin-bottom: var(--space-xs);
+  line-height: 1.6;
+}
+
+.about-panel a {
+  color: var(--koyn-primary-light);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.about-panel a:hover {
+  color: var(--koyn-primary);
+  text-decoration: underline;
+}
+
+.koynlabs-footer {
+  margin-top: var(--space-xl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--koyn-border);
+}
+
+.koynlabs-footer h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: var(--space-xs);
+  color: var(--koyn-text);
+}
+
+.koynlabs-footer p {
+  color: var(--koyn-text-secondary);
+  font-size: 0.875rem;
 } 
