@@ -151,8 +151,8 @@ nav {
 .ai-indicator {
   position: absolute;
   top: -8px;
-  right: -30px;
-  /* background: var(--koyn-secondary); */
+  right: -8px;
+  background: var(--koyn-secondary);
   color: var(--koyn-bg);
   font-size: 0.7rem;
   font-weight: 700;
@@ -209,8 +209,10 @@ nav {
   position: relative;
   margin-bottom: var(--space-xl);
   max-width: 600px;
-  margin: auto;
-
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  justify-content: center;
 }
 
 .enhanced-search-form input[type="text"] {
@@ -234,7 +236,7 @@ nav {
 
 .search-button {
   position: absolute;
-  right: -80px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
   background: var(--koyn-primary);
@@ -242,8 +244,7 @@ nav {
   border-radius: var(--radius-full);
   width: 2.5rem;
   height: 2.5rem;
-  display: flex
-;
+  display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -263,6 +264,9 @@ nav {
 /* Trending topics */
 .trending-topics {
   width: 100%;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
   background-color: var(--koyn-bg-panel);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
@@ -318,6 +322,9 @@ nav {
 .powered-by {
   text-align: center;
   margin-top: var(--space-xl);
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 600px;
   font-size: 0.875rem;
   color: var(--koyn-text-secondary);
 }
@@ -331,6 +338,9 @@ nav {
 .openbb-badge {
   text-align: center;
   margin-top: var(--space-md);
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 600px;
   font-size: 0.875rem;
   color: var(--koyn-text-secondary);
   display: flex;
