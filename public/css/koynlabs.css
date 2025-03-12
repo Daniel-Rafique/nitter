@@ -1,0 +1,308 @@
+:root {
+  /* Main colors */
+  --koyn-primary: #6366f1;
+  --koyn-primary-light: #818cf8;
+  --koyn-primary-dark: #4f46e5;
+  --koyn-secondary: #10b981;
+  --koyn-accent: #f59e0b;
+  
+  /* Cryptocurrency colors */
+  --bitcoin-color: #f7931a;
+  --ethereum-color: #627eea;
+  --solana-color: #14f195;
+  
+  /* UI colors */
+  --koyn-bg: #0f172a;
+  --koyn-bg-panel: #1e293b;
+  --koyn-bg-card: #334155;
+  --koyn-text: #f8fafc;
+  --koyn-text-secondary: #cbd5e1;
+  --koyn-border: #475569;
+  
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-xxl: 3rem;
+  
+  /* Border radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+}
+
+/* Override default styles */
+body {
+  --bg_color: var(--koyn-bg);
+  --fg_color: var(--koyn-text);
+  --bg_panel: var(--koyn-bg-panel);
+  --accent: var(--koyn-primary);
+  --accent_light: var(--koyn-primary-light);
+  --accent_dark: var(--koyn-primary-dark);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Modern navbar */
+nav {
+  backdrop-filter: blur(8px);
+  background-color: rgba(15, 23, 42, 0.8) !important;
+  border-bottom: 1px solid var(--koyn-border);
+}
+
+.inner-nav {
+  max-width: 1200px;
+  width: 100%;
+  padding: 0 var(--space-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.site-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, var(--koyn-primary), var(--koyn-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-left: var(--space-sm);
+}
+
+.site-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.nav-link {
+  color: var(--koyn-text-secondary);
+  font-weight: 500;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  color: var(--koyn-text);
+  background-color: var(--koyn-bg-card);
+  text-decoration: none;
+}
+
+/* Hide nav links on mobile */
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+  }
+}
+
+/* Enhanced search container */
+.enhanced-search-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 800px;
+  margin: var(--space-xxl) auto;
+  padding: 0 var(--space-lg);
+}
+
+.search-heading {
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: var(--space-sm);
+  background: linear-gradient(90deg, var(--koyn-primary), var(--koyn-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
+}
+
+.search-subheading {
+  font-size: 1.125rem;
+  text-align: center;
+  color: var(--koyn-text-secondary);
+  margin-bottom: var(--space-xl);
+  max-width: 600px;
+}
+
+.enhanced-search-form {
+  width: 100%;
+  position: relative;
+  margin-bottom: var(--space-xl);
+}
+
+.enhanced-search-form input[type="text"] {
+  width: 100%;
+  padding: var(--space-lg) var(--space-xl);
+  padding-right: 3.5rem;
+  font-size: 1.125rem;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--koyn-border);
+  background-color: var(--koyn-bg-panel);
+  color: var(--koyn-text);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.enhanced-search-form input[type="text"]:focus {
+  border-color: var(--koyn-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+  transform: translateY(-2px);
+}
+
+.search-button {
+  position: absolute;
+  right: var(--space-md);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--koyn-primary);
+  border: none;
+  border-radius: var(--radius-full);
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.search-button:hover {
+  background: var(--koyn-primary-dark);
+}
+
+.search-button .icon-search {
+  color: white;
+  font-size: 1.25rem;
+}
+
+/* Trending topics */
+.trending-topics {
+  width: 100%;
+  background-color: var(--koyn-bg-panel);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.trending-topics h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: var(--space-md);
+  color: var(--koyn-text);
+}
+
+.topic-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-md);
+  list-style: none;
+  padding: 0;
+}
+
+.trending-topic {
+  display: block;
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--koyn-bg-card);
+  border-radius: var(--radius-md);
+  color: var(--koyn-text);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.trending-topic:hover {
+  background-color: var(--koyn-primary);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+/* Cryptocurrency specific styling */
+.trending-topic[href*="Bitcoin"] {
+  border-left: 3px solid var(--bitcoin-color);
+}
+
+.trending-topic[href*="Ethereum"] {
+  border-left: 3px solid var(--ethereum-color);
+}
+
+.trending-topic[href*="Solana"] {
+  border-left: 3px solid var(--solana-color);
+}
+
+/* AI Search icon */
+.icon-search-ai {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ai-indicator {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--koyn-secondary);
+  color: var(--koyn-bg);
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 60px var(--space-lg) var(--space-lg);
+}
+
+/* Powered by Koyn.ai badge */
+.powered-by {
+  text-align: center;
+  margin-top: var(--space-xl);
+  font-size: 0.875rem;
+  color: var(--koyn-text-secondary);
+}
+
+.powered-by a {
+  color: var(--koyn-primary-light);
+  font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .enhanced-search-container {
+    margin-top: var(--space-lg);
+  }
+  
+  .topic-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .enhanced-search-form input[type="text"] {
+    font-size: 1rem;
+    padding: var(--space-md) var(--space-lg);
+    padding-right: 3rem;
+  }
+  
+  .search-button {
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  .topic-list {
+    grid-template-columns: 1fr;
+  }
+} 

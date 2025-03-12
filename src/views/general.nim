@@ -29,9 +29,15 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
   buildHtml(nav):
     tdiv(class="inner-nav"):
       tdiv(class="nav-item"):
+        a(href="/"): 
+          img(class="site-logo", src="/logo.jpg", alt="Koynlabs Logo")
         a(class="site-name", href="/"): text "Koynlabs"
 
-      a(href="/"): img(class="site-logo", src="/logo.jpg", alt="Koynlabs Logo")
+      tdiv(class="nav-links"):
+        a(href="/search?q=Bitcoin", class="nav-link"): text "Bitcoin"
+        a(href="/search?q=Ethereum", class="nav-link"): text "Ethereum"
+        a(href="/search?q=Solana", class="nav-link"): text "Solana"
+        a(href="/search?q=DeFi", class="nav-link"): text "DeFi"
 
       tdiv(class="nav-item right"):
         aiSearchIcon("AI Search", "/search?ai=true")
@@ -60,6 +66,9 @@ proc renderTrendingTopics(): VNode =
 
 proc renderEnhancedSearch(): VNode =
   buildHtml(tdiv(class="enhanced-search-container")):
+    h1(class="search-heading"): text "Discover Crypto Insights"
+    p(class="search-subheading"): text "Real-time Twitter data for Bitcoin, Ethereum, Solana, and DeFi"
+    
     form(`method`="get", action="/search", autocomplete="off", class="enhanced-search-form"):
       hiddenField("f", "tweets")
       input(`type`="text", name="q", autofocus="",
@@ -68,6 +77,10 @@ proc renderEnhancedSearch(): VNode =
         icon "search"
     
     renderTrendingTopics()
+    
+    tdiv(class="powered-by"):
+      text "Search Powered by "
+      a(href="https://koyn.ai", target="_blank"): text "Koyn.ai"
 
 proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
                  video=""; images: seq[string] = @[]; banner=""; ogTitle="";
