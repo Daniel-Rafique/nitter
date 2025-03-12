@@ -21,6 +21,11 @@ proc getPath*(req: Request): string =
 proc getHost*(req: Request): string =
   result = req.headers.getOrDefault("Host")
 
+# Helper function to get the URL prefix based on the configuration
+proc getUrlPrefix*(cfg: Config): string =
+  if cfg.useHttps: "https://" & cfg.hostname
+  else: "http://" & cfg.hostname
+
 # Helper function to generate RSS URL for search queries
 proc genRss*(query: string; params: Query): string =
   if params.kind == tweets:
