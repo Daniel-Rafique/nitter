@@ -74,7 +74,7 @@ proc renderEnhancedSearch(): VNode =
       button(`type`="submit", class="search-button"): 
         icon "search"
     
-    renderTrendingTopics()
+    # renderTrendingTopics()
     
     tdiv(class="powered-by"):
       text "Search Powered by "
