@@ -12,7 +12,7 @@ proc fetchKoynlabsData*(query: string): Future[JsonNode] {.async.} =
   let client = newAsyncHttpClient()
   client.headers = newHttpHeaders({"Content-Type": "application/json"})
   
-  # Create JSON payload
+  # Create JSON payload using string interpolation
   let payload = """{"query": "$1"}""" % query
   
   let response = await client.post("https://api.koynlabs.com:3443/api/search", payload)
@@ -34,7 +34,7 @@ proc processWithOpenAI*(query: string, koynData: JsonNode): Future[seq[string]] 
   
   # Extract relevant data from Koynlabs response
   var items: JsonNode
-  if koynData.hasKey("data") and koynData["data"].hasKey("items"):
+  if hasKey(koynData, "data") and hasKey(koynData["data"], "items"):
     items = koynData["data"]["items"]
   else:
     items = parseJson("[]")
@@ -46,11 +46,11 @@ proc processWithOpenAI*(query: string, koynData: JsonNode): Future[seq[string]] 
     if count >= 10:  # Limit to 10 items to avoid token limits
       break
     
-    if item.hasKey("title") and item.hasKey("creator") and item.hasKey("pubDate"):
-      let title = item["title"].getStr()
-      let creator = item["creator"].getStr()
-      let pubDate = item["pubDate"].getStr()
-      let description = if item.hasKey("description"): item["description"].getStr() else: ""
+    if hasKey(item, "title") and hasKey(item, "creator") and hasKey(item, "pubDate"):
+      let title = getStr(item["title"])
+      let creator = getStr(item["creator"])
+      let pubDate = getStr(item["pubDate"])
+      let description = if hasKey(item, "description"): getStr(item["description"]) else: ""
       
       let simplifiedItem = """{"title": "$1", "creator": "$2", "pubDate": "$3", "description": "$4"}""" % [
         title.replace("\"", "\\\""), 
@@ -91,11 +91,11 @@ proc processWithOpenAI*(query: string, koynData: JsonNode): Future[seq[string]] 
     let body = await response.body
     let jsonResponse = parseJson(body)
     
-    if jsonResponse.hasKey("choices") and jsonResponse["choices"].len > 0 and 
-       jsonResponse["choices"][0].hasKey("message") and 
-       jsonResponse["choices"][0]["message"].hasKey("content"):
+    if hasKey(jsonResponse, "choices") and len(jsonResponse["choices"]) > 0 and 
+       hasKey(jsonResponse["choices"][0], "message") and 
+       hasKey(jsonResponse["choices"][0]["message"], "content"):
       
-      let content = jsonResponse["choices"][0]["message"]["content"].getStr()
+      let content = getStr(jsonResponse["choices"][0]["message"]["content"])
       # Split the content into smaller chunks for streaming
       var chunks: seq[string] = @[]
       var currentChunk = ""
@@ -157,13 +157,13 @@ proc createOpenBBRouter*(cfg: Config) =
       
       # Extract the query from the messages
       var query = ""
-      if reqBody.hasKey("messages") and reqBody["messages"].len > 0:
+      if hasKey(reqBody, "messages") and len(reqBody["messages"]) > 0:
         # Use direct index instead of BackwardsIndex (^1)
-        let lastIndex = reqBody["messages"].len - 1
+        let lastIndex = len(reqBody["messages"]) - 1
         let lastMessage = reqBody["messages"][lastIndex]
-        if lastMessage.hasKey("role") and lastMessage["role"].getStr() == "human" and
-           lastMessage.hasKey("content"):
-          query = lastMessage["content"].getStr()
+        if hasKey(lastMessage, "role") and getStr(lastMessage["role"]) == "human" and
+           hasKey(lastMessage, "content"):
+          query = getStr(lastMessage["content"])
       
       if query.len == 0:
         resp Http400, headers, "event: error\ndata: {\"message\":\"No query found in request\"}\n\n"
@@ -192,7 +192,7 @@ proc createOpenBBRouter*(cfg: Config) =
           responseContent.add("event: copilotMessageChunk\ndata: {\"delta\":\"" & $c & "\"}\n\n")
       
       # Add citations if there are items
-      if koynData.hasKey("data") and koynData["data"].hasKey("items") and koynData["data"]["items"].len > 0:
+      if hasKey(koynData, "data") and hasKey(koynData["data"], "items") and len(koynData["data"]["items"]) > 0:
         let items = koynData["data"]["items"]
         var citationsArray: seq[string] = @[]
         var count = 0
@@ -201,11 +201,11 @@ proc createOpenBBRouter*(cfg: Config) =
           if count >= 5:  # Limit to 5 citations
             break
             
-          if item.hasKey("title") and item.hasKey("creator") and item.hasKey("link"):
-            let title = item["title"].getStr()
-            let url = item["link"].getStr()
-            let date = if item.hasKey("pubDate"): item["pubDate"].getStr() else: ""
-            let source = item["creator"].getStr()
+          if hasKey(item, "title") and hasKey(item, "creator") and hasKey(item, "link"):
+            let title = getStr(item["title"])
+            let url = getStr(item["link"])
+            let date = if hasKey(item, "pubDate"): getStr(item["pubDate"]) else: ""
+            let source = getStr(item["creator"])
             
             let citation = """
             {
