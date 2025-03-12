@@ -18,9 +18,9 @@ proc getPath*(req: Request): string =
   result = $(parseUri(req.path) ? filterParams(req.params))
 
 # Helper function to generate RSS URL for search queries
-proc genRss*(query: Query; params: Query): string =
-  if query.kind == tweets:
-    result = "/search/rss?" & genQueryUrl(query)
+proc genRss*(query: string; params: Query): string =
+  if params.kind == tweets:
+    result = "/search/rss?" & genQueryUrl(params)
   else:
     result = ""
 
