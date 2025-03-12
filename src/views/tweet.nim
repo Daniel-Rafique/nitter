@@ -227,7 +227,7 @@ proc renderQuote(quote: Tweet; prefs: Prefs; path: string): VNode =
         elif quote.text.len > 0:
           text quote.text
         else:
-          text "This tweet is unavailable"
+          text "This post is unavailable"
 
   buildHtml(tdiv(class="quote quote-big")):
     a(class="quote-link", href=getLink(quote))
