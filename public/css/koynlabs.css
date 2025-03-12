@@ -232,7 +232,7 @@ nav {
   transform: translateY(-2px);
 }
 
-search-button {
+.search-button {
   position: absolute;
   right: -80px;
   top: 50%;
