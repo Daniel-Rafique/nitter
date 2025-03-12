@@ -63,7 +63,7 @@ settings:
 
 routes:
   get "/":
-    resp renderMain(renderSearch(), request, cfg, themePrefs())
+    resp renderMain(buildHtml(tdiv()), request, cfg, themePrefs())
 
   get "/about":
     resp renderMain(renderAbout(), request, cfg, themePrefs())
