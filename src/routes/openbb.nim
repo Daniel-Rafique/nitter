@@ -230,7 +230,7 @@ proc createOpenBBRouter*(cfg: Config) =
       # logDebug("Extracted query: " & query)
       
       if query.len == 0:
-        logDebug("No query found in request")
+        # logDebug("No query found in request")
         resp Http400, headers, "event: error\ndata: {\"message\":\"No query found in request\"}\n\n"
         return
       
@@ -242,7 +242,7 @@ proc createOpenBBRouter*(cfg: Config) =
       try:
         koynData = await fetchKoynlabsDataForOpenBB(query)
       except Exception as e:
-        logDebug("Failed to fetch data from Koynlabs API: " & e.msg)
+        # logDebug("Failed to fetch data from Koynlabs API: " & e.msg)
         resp Http500, headers, responseContent & "event: error\ndata: {\"message\":\"Failed to fetch data from Koynlabs API: " & escapeJsonString(e.msg) & "\"}\n\n"
         return
       
