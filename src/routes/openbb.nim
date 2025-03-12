@@ -1,13 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-import asyncdispatch, json, strutils, httpclient, asynchttpserver, streams, os, times
+import asyncdispatch, json, strutils, httpclient, asynchttpserver, os, times
 import jester
 import router_utils
-import ".."/[types, config]
-
-# Helper function to get the URL prefix based on the configuration
-proc getUrlPrefix*(cfg: Config): string =
-  if cfg.useHttps: "https://" & cfg.hostname
-  else: "http://" & cfg.hostname
+import ".."/[types, config, formatters]
 
 # OpenAI API key - in production, this should be securely stored
 let openaiApiKey = getEnv("OPENAI_API_KEY", "")

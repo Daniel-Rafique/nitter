@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-import strutils, strformat, sequtils, unicode, tables, options, json, asyncdispatch, httpclient
+import strutils, tables, options, json, asyncdispatch, httpclient
 import karax/[karaxdsl, vdom]
 import karax/vstyles
 
@@ -20,11 +20,6 @@ proc getPath*(req: Request): string =
 # Helper method to get the host from a Request
 proc getHost*(req: Request): string =
   result = req.headers.getOrDefault("Host")
-
-# Helper function to get the URL prefix based on the configuration
-proc getUrlPrefix*(cfg: Config): string =
-  if cfg.useHttps: "https://" & cfg.hostname
-  else: "http://" & cfg.hostname
 
 # Helper function to generate RSS URL for search queries
 proc genRss*(query: string; params: Query): string =
