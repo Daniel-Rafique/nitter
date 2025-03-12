@@ -158,7 +158,9 @@ proc createOpenBBRouter*(cfg: Config) =
       # Extract the query from the messages
       var query = ""
       if reqBody.hasKey("messages") and reqBody["messages"].len > 0:
-        let lastMessage = reqBody["messages"][^1]
+        # Use direct index instead of BackwardsIndex (^1)
+        let lastIndex = reqBody["messages"].len - 1
+        let lastMessage = reqBody["messages"][lastIndex]
         if lastMessage.hasKey("role") and lastMessage["role"].getStr() == "human" and
            lastMessage.hasKey("content"):
           query = lastMessage["content"].getStr()
