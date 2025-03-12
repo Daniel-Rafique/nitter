@@ -66,13 +66,13 @@ proc renderTrendingTopics(): VNode =
 
 proc renderEnhancedSearch(): VNode =
   buildHtml(tdiv(class="enhanced-search-container")):
-    h1(class="search-heading"): text "Discover Crypto Insights"
-    p(class="search-subheading"): text "Real-time Twitter data for Bitcoin, Ethereum, Solana, and DeFi"
+    h1(class="search-heading"): text "Discover Market Insights"
+    p(class="search-subheading"): text "Real-time data for Bitcoin, Ethereum, Solana, and DeFi"
     
     form(`method`="get", action="/search", autocomplete="off", class="enhanced-search-form"):
       hiddenField("f", "tweets")
       input(`type`="text", name="q", autofocus="",
-            placeholder="Search Twitter for crypto content...", dir="auto")
+            placeholder="Search for insights...", dir="auto")
       button(`type`="submit", class="search-button"): 
         icon "search"
     
