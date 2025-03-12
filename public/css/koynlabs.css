@@ -278,6 +278,7 @@ nav {
   font-weight: 600;
   margin-bottom: var(--space-md);
   color: var(--koyn-text);
+  text-align: center;
 }
 
 .topic-list {
@@ -286,6 +287,7 @@ nav {
   gap: var(--space-md);
   list-style: none;
   padding: 0;
+  width: 100%;
 }
 
 .trending-topic {
@@ -297,6 +299,7 @@ nav {
   font-weight: 500;
   transition: all 0.2s ease;
   text-align: center;
+  width: 100%;
 }
 
 .trending-topic:hover {
@@ -373,8 +376,23 @@ nav {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+  .container {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+  
   .enhanced-search-container {
     margin-top: var(--space-lg);
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+  
+  .trending-topics {
+    width: 100%;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding: var(--space-md);
   }
   
   .topic-list {
@@ -383,6 +401,11 @@ nav {
 }
 
 @media (max-width: 480px) {
+  .container {
+    padding-left: var(--space-sm);
+    padding-right: var(--space-sm);
+  }
+  
   .enhanced-search-form input[type="text"] {
     font-size: 1rem;
     padding: var(--space-md) var(--space-lg);
@@ -394,8 +417,25 @@ nav {
     height: 2rem;
   }
   
+  .trending-topics {
+    padding: var(--space-sm);
+  }
+  
   .topic-list {
     grid-template-columns: 1fr;
+    width: 100%;
+  }
+  
+  .trending-topic {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .powered-by,
+  .openbb-badge {
+    max-width: 100%;
+    padding-left: var(--space-sm);
+    padding-right: var(--space-sm);
   }
 }
 
