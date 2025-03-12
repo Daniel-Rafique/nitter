@@ -5,6 +5,7 @@ from htmlgen import a
 from os import getEnv
 
 import jester
+import karax/[karaxdsl, vdom]
 
 import types, config, prefs, formatters, redis_cache, http_pool, auth
 import views/[general, about]
@@ -63,7 +64,7 @@ settings:
 
 routes:
   get "/":
-    resp renderMain(buildHtml(tdiv()), request, cfg, themePrefs())
+    resp renderMain(nil, request, cfg, themePrefs())
 
   get "/about":
     resp renderMain(renderAbout(), request, cfg, themePrefs())

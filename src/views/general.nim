@@ -191,7 +191,8 @@ proc renderMain*(body: VNode; req: Request; cfg: Config; prefs=defaultPrefs;
         if req.path == "/":
           # Only show the enhanced search on the homepage
           renderEnhancedSearch()
-        body
+        if body != nil:
+          body
 
   result = doctype & $node
 
