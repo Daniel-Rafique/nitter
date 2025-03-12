@@ -13,6 +13,10 @@ include "../views/opensearch.nimf"
 
 export search
 
+# Helper method to get the path from a Request
+proc getPath*(req: Request): string =
+  result = $(parseUri(req.path) ? filterParams(req.params))
+
 const toggles = {
   "nativeretweets": "Reposts",
   "media": "Media",
@@ -166,7 +170,8 @@ proc renderSearch*(req: Request; query: string; params: Query): Future[string] {
       discard
 
   if query.len > 0:
-    result = await getSearch(query, searchParams)
+    let tweets = await getGraphTweetSearch(searchParams)
+    result = $renderTweetSearch(tweets, prefs, req.getPath())
 
   let
     rss = genRss(query, searchParams)
