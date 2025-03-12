@@ -43,8 +43,7 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
         aiSearchIcon("AI Search", "/search?ai=true")
         if cfg.enableRss and rss.len > 0:
           icon "rss-feed", title="RSS Feed", href=rss
-        icon "info", title="About", href="/about"
-        icon "cog", title="Preferences", href=("/settings?referer=" & encodeUrl(path))
+        text "info", title="About", href="/about"
 
 proc renderTrendingTopics(): VNode =
   buildHtml(tdiv(class="trending-topics")):
