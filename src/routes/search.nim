@@ -157,7 +157,7 @@ proc renderAiSearchResults*(query: string, koynData: JsonNode, sentiment: tuple[
     tdiv(class="ai-search-footer"):
       p: text "Data sourced from Koynlabs API"
 
-proc renderSearch*(req: Request; query: string; params: Query): Future[string] {.async.} =
+proc renderSearch*(req: Request; query: string; params: Query; cfg: Config): Future[string] {.async.} =
   let
     prefs = getPrefs(req.cookies)
     title = query & " - Twitter Search"
@@ -187,7 +187,7 @@ proc renderSearch*(req: Request; query: string; params: Query): Future[string] {
   let
     rss = genRss(query, searchParams)
     html = buildHtml(html(lang="en")):
-      renderHead(title, desc, ogTitle, path, rss, req.getHost())
+      renderHead(prefs, cfg, req, title, desc, "", @[], "", ogTitle, rss, path)
 
       body:
         renderNav(prefs.getString("theme"))
@@ -223,7 +223,7 @@ proc createSearchRouter*(cfg: Config) =
       
       # Handle AI-powered search
       if aiSearch and q.len > 0:
-        let result = await renderSearch(request, q, query)
+        let result = await renderSearch(request, q, query, cfg)
         resp Http200, {"Content-Type": "text/html; charset=utf-8"}, result
       else:
         # Regular search handling
