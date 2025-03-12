@@ -13,7 +13,8 @@ proc fetchKoynlabsData*(query: string): Future[JsonNode] {.async.} =
   client.headers = newHttpHeaders({"Content-Type": "application/json"})
   
   # Create JSON payload
-  let payload = %* {"query": query}
+  var payload = newJObject()
+  payload["query"] = newJString(query)
   
   let response = await client.post("https://api.koynlabs.com:3443/api/search", $payload)
   let body = await response.body
@@ -48,13 +49,13 @@ proc processWithOpenAI*(query: string, koynData: JsonNode): Future[seq[string]] 
     
     if item.hasKey("title") and item.hasKey("creator") and item.hasKey("pubDate"):
       var simplifiedItem = newJObject()
-      simplifiedItem["title"] = %item["title"].getStr()
-      simplifiedItem["creator"] = %item["creator"].getStr()
-      simplifiedItem["pubDate"] = %item["pubDate"].getStr()
+      simplifiedItem["title"] = newJString(item["title"].getStr())
+      simplifiedItem["creator"] = newJString(item["creator"].getStr())
+      simplifiedItem["pubDate"] = newJString(item["pubDate"].getStr())
       if item.hasKey("description"):
-        simplifiedItem["description"] = %item["description"].getStr()
+        simplifiedItem["description"] = newJString(item["description"].getStr())
       else:
-        simplifiedItem["description"] = %""
+        simplifiedItem["description"] = newJString("")
       
       simplifiedItems.add(simplifiedItem)
     
@@ -64,21 +65,24 @@ proc processWithOpenAI*(query: string, koynData: JsonNode): Future[seq[string]] 
   let systemContent = "You are a helpful assistant that provides insights about cryptocurrency based on real-time data. Analyze the provided data and give a concise, informative summary about the query. Focus on key trends, important news, and relevant insights. Format your response in markdown with bullet points for clarity."
   let userContent = "I want to know about " & query & ". Here is some real-time data from social media and news sources: " & $simplifiedItems
   
-  let promptJson = %* {
-    "model": "gpt-3.5-turbo",
-    "messages": [
-      {
-        "role": "system",
-        "content": systemContent
-      },
-      {
-        "role": "user",
-        "content": userContent
-      }
-    ],
-    "temperature": 0.7,
-    "max_tokens": 500
-  }
+  var promptJson = newJObject()
+  promptJson["model"] = newJString("gpt-3.5-turbo")
+  
+  var messages = newJArray()
+  
+  var systemMessage = newJObject()
+  systemMessage["role"] = newJString("system")
+  systemMessage["content"] = newJString(systemContent)
+  messages.add(systemMessage)
+  
+  var userMessage = newJObject()
+  userMessage["role"] = newJString("user")
+  userMessage["content"] = newJString(userContent)
+  messages.add(userMessage)
+  
+  promptJson["messages"] = messages
+  promptJson["temperature"] = newJFloat(0.7)
+  promptJson["max_tokens"] = newJInt(500)
   
   try:
     let response = await client.post("https://api.openai.com/v1/chat/completions", $promptJson)
@@ -115,18 +119,21 @@ proc createOpenBBRouter*(cfg: Config) =
     get "/copilots.json":
       # Serve the copilots.json configuration file
       let urlPrefix = getUrlPrefix(cfg)
-      let copilotConfig = %* {
-        "koynlabs_copilot": {
-          "name": "Koynlabs Crypto Copilot",
-          "description": "AI-powered crypto insights using real-time data from Koynlabs API.",
-          "image": urlPrefix & "/logo.jpg",
-          "hasStreaming": true,
-          "hasFunctionCalling": true,
-          "endpoints": {
-            "query": urlPrefix & "/openbb/query"
-          }
-        }
-      }
+      
+      var copilotConfig = newJObject()
+      var koynlabsCopilot = newJObject()
+      
+      koynlabsCopilot["name"] = newJString("Koynlabs Crypto Copilot")
+      koynlabsCopilot["description"] = newJString("AI-powered crypto insights using real-time data from Koynlabs API.")
+      koynlabsCopilot["image"] = newJString(urlPrefix & "/logo.jpg")
+      koynlabsCopilot["hasStreaming"] = newJBool(true)
+      koynlabsCopilot["hasFunctionCalling"] = newJBool(true)
+      
+      var endpoints = newJObject()
+      endpoints["query"] = newJString(urlPrefix & "/openbb/query")
+      koynlabsCopilot["endpoints"] = endpoints
+      
+      copilotConfig["koynlabs_copilot"] = koynlabsCopilot
       
       resp Http200, {"Content-Type": "application/json"}, $copilotConfig
 
@@ -195,22 +202,21 @@ proc createOpenBBRouter*(cfg: Config) =
             
           if item.hasKey("title") and item.hasKey("creator") and item.hasKey("link"):
             var citation = newJObject()
-            citation["title"] = %item["title"].getStr()
-            citation["url"] = %item["link"].getStr()
+            citation["title"] = newJString(item["title"].getStr())
+            citation["url"] = newJString(item["link"].getStr())
             if item.hasKey("pubDate"):
-              citation["date"] = %item["pubDate"].getStr()
+              citation["date"] = newJString(item["pubDate"].getStr())
             else:
-              citation["date"] = %""
-            citation["source"] = %item["creator"].getStr()
+              citation["date"] = newJString("")
+            citation["source"] = newJString(item["creator"].getStr())
             
             citationsArray.add(citation)
               
           count += 1
         
         if citationsArray.len > 0:
-          let citationCollection = %* {
-            "citations": citationsArray
-          }
+          var citationCollection = newJObject()
+          citationCollection["citations"] = citationsArray
           
           responseContent.add("event: copilotCitationCollection\ndata: " & $citationCollection & "\n\n")
       
