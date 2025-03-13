@@ -51,7 +51,7 @@
             <h1 class="search-heading">Discover Market Insights</h1>
             <p class="search-subheading">Real-time data for Bitcoin, Ethereum, Solana, and DeFi</p>
             
-            <form method="post" action="https://api.koynlabs.com:3003/api/sentiment" autocomplete="off" class="enhanced-search-form">
+            <form id="sentimentForm" method="post" action="https://api.koynlabs.com:3003/api/sentiment" autocomplete="off" class="enhanced-search-form">
                 <input type="text" name="question" autofocus placeholder="Search for insights..." dir="auto">
                 <input type="hidden" name="limit" value="50">
                 <button type="submit" class="search-button"><i class="icon-search"></i></button>
@@ -74,6 +74,334 @@
                 <code>https://koynlabs.com/copilots.json</code>
             </p>
         </div>
+
+        <!-- Add a results container -->
+        <div id="resultsContainer" style="display: none;">
+            <div class="results-header">
+                <h2 id="assetName"></h2>
+                <div class="asset-price">Current Price: $<span id="assetPrice"></span></div>
+                <div class="sentiment-badge" id="sentimentBadge"></div>
+            </div>
+            
+            <div class="chart-container">
+                <img id="priceChart" src="" alt="Price Chart">
+            </div>
+            
+            <div class="analysis-container">
+                <h3>Analysis</h3>
+                <div id="analysisText"></div>
+            </div>
+            
+            <div class="news-container">
+                <h3>Related News</h3>
+                <ul id="newsList"></ul>
+            </div>
+        </div>
     </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sentimentForm = document.getElementById('sentimentForm');
+        const resultsContainer = document.getElementById('resultsContainer');
+        
+        sentimentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading indicator
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'loading-indicator';
+            loadingIndicator.textContent = 'Analyzing...';
+            sentimentForm.appendChild(loadingIndicator);
+            
+            // Get the question
+            const questionInput = sentimentForm.querySelector('input[name="question"]');
+            const question = questionInput.value;
+            
+            // Make the API request
+            fetch('https://api.koynlabs.com:3003/api/sentiment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ question })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Remove loading indicator
+                sentimentForm.removeChild(loadingIndicator);
+                
+                // Display the results
+                displayResults(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                sentimentForm.removeChild(loadingIndicator);
+                alert('An error occurred while fetching results. Please try again.');
+            });
+        });
+        
+        function displayResults(data) {
+            // Make sure we have results
+            if (!data.results || data.results.length === 0) {
+                alert('No results found. Please try a different query.');
+                return;
+            }
+            
+            const result = data.results[0];
+            
+            // Update asset name and price
+            document.getElementById('assetName').textContent = result.asset.charAt(0).toUpperCase() + result.asset.slice(1);
+            document.getElementById('assetPrice').textContent = result.asset_price;
+            
+            // Update sentiment badge
+            const sentimentBadge = document.getElementById('sentimentBadge');
+            sentimentBadge.textContent = result.social_sentiment;
+            sentimentBadge.className = 'sentiment-badge ' + result.social_sentiment.toLowerCase();
+            
+            // Update price chart
+            document.getElementById('priceChart').src = result.price_chart;
+            
+            // Update analysis text with hoverable news sources
+            document.getElementById('analysisText').innerHTML = result.analysis;
+            
+            // Add news items
+            const newsList = document.getElementById('newsList');
+            newsList.innerHTML = '';
+            
+            if (data.news && data.news.length > 0) {
+                // Store news data globally for tooltips
+                window.latestNewsData = data.news;
+                
+                data.news.forEach(newsItem => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = newsItem.url;
+                    a.target = '_blank';
+                    a.textContent = newsItem.title;
+                    
+                    // Add source and date info
+                    const sourceInfo = document.createElement('span');
+                    sourceInfo.className = 'news-source-info';
+                    sourceInfo.textContent = ` - ${newsItem.source}`;
+                    
+                    if (newsItem.publishedAt) {
+                        const date = new Date(newsItem.publishedAt);
+                        sourceInfo.textContent += ` (${date.toLocaleDateString()})`;
+                    }
+                    
+                    li.appendChild(a);
+                    li.appendChild(sourceInfo);
+                    
+                    // Add tooltip with description if available
+                    if (newsItem.description) {
+                        li.title = newsItem.description;
+                        
+                        // For better tooltip experience
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'news-tooltip';
+                        tooltip.textContent = newsItem.description;
+                        li.appendChild(tooltip);
+                        
+                        // Show/hide tooltip on hover
+                        li.addEventListener('mouseenter', () => {
+                            tooltip.style.display = 'block';
+                        });
+                        
+                        li.addEventListener('mouseleave', () => {
+                            tooltip.style.display = 'none';
+                        });
+                    }
+                    
+                    newsList.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = 'No recent news available.';
+                newsList.appendChild(li);
+            }
+            
+            // Make the news source spans interactive
+            setupNewsSourceHovers();
+            
+            // Show the results container
+            resultsContainer.style.display = 'block';
+            
+            // Scroll to results
+            resultsContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function setupNewsSourceHovers() {
+            // Find all news source spans
+            const newsSourceSpans = document.querySelectorAll('.news-source');
+            
+            newsSourceSpans.forEach(span => {
+                const source = span.getAttribute('data-source');
+                
+                // Find matching news item
+                const matchingNews = window.latestNewsData?.find(item => 
+                    item.source.toLowerCase().includes(source.toLowerCase())
+                );
+                
+                if (matchingNews) {
+                    // Create tooltip
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'news-tooltip';
+                    tooltip.innerHTML = `
+                        <strong>${matchingNews.title}</strong>
+                        <p>${matchingNews.description || ''}</p>
+                        <small>Source: ${matchingNews.source}</small>
+                    `;
+                    
+                    span.appendChild(tooltip);
+                    
+                    // Show/hide tooltip on hover
+                    span.addEventListener('mouseenter', () => {
+                        tooltip.style.display = 'block';
+                    });
+                    
+                    span.addEventListener('mouseleave', () => {
+                        tooltip.style.display = 'none';
+                    });
+                    
+                    // Make clickable to open the news article
+                    span.style.cursor = 'pointer';
+                    span.addEventListener('click', () => {
+                        window.open(matchingNews.url, '_blank');
+                    });
+                }
+            });
+        }
+    });
+    </script>
+
+    <!-- Add CSS for styling the results -->
+    <style>
+    /* Results container styling */
+    #resultsContainer {
+        margin-top: 30px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .results-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .results-header h2 {
+        margin: 0;
+        margin-right: 15px;
+        font-size: 24px;
+    }
+
+    .asset-price {
+        font-size: 18px;
+        font-weight: 500;
+        margin-right: 15px;
+    }
+
+    .sentiment-badge {
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-weight: 500;
+        font-size: 14px;
+    }
+
+    .sentiment-badge.positive {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .sentiment-badge.negative {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .sentiment-badge.neutral {
+        background-color: #e2e3e5;
+        color: #383d41;
+    }
+
+    .chart-container {
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .chart-container img {
+        max-width: 100%;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .analysis-container {
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+
+    .news-container ul {
+        padding-left: 20px;
+    }
+
+    .news-container li {
+        margin-bottom: 10px;
+        position: relative;
+    }
+
+    .news-source-info {
+        color: #6c757d;
+        font-size: 0.9em;
+    }
+
+    /* News source hover styling */
+    .news-source {
+        position: relative;
+        font-weight: 500;
+        color: #007bff;
+        text-decoration: underline;
+        cursor: help;
+    }
+
+    .news-tooltip {
+        display: none;
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 300px;
+        padding: 10px;
+        background-color: white;
+        border-radius: 4px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        z-index: 100;
+        font-weight: normal;
+        color: #212529;
+        text-align: left;
+        line-height: 1.5;
+    }
+
+    .news-tooltip:after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: white transparent transparent transparent;
+    }
+
+    /* Loading indicator */
+    .loading-indicator {
+        position: absolute;
+        right: 50px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        font-style: italic;
+    }
+    </style>
 </body>
 </html>
