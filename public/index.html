@@ -159,7 +159,7 @@
             const result = data.results[0];
             
             // Update asset name and price
-            document.getElementById('assetName').textContent = result.asset.charAt(0).toUpperCase() + result.asset.slice(1);
+            document.getElementById('assetName').textContent = result.asset.name;
             document.getElementById('assetPrice').textContent = result.asset_price === 'N/A' ? 'Not Available' : result.asset_price.toLocaleString();
             
             // Update sentiment badge with Koynlabs styling
