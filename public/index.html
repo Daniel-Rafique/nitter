@@ -46,7 +46,7 @@
     </nav>
 
     <div class="container">
-        <!-- Results container moved to the top -->
+        <!-- Results container -->
         <div id="resultsContainer" class="ai-search-results">
         </div>
 
@@ -72,6 +72,9 @@
         const sentimentForm = document.getElementById('sentimentForm');
         const resultsContainer = document.getElementById('resultsContainer');
         const searchContainer = document.getElementById('searchContainer');
+        
+        // Make sure results container is hidden on page load
+        resultsContainer.style.display = 'none';
         
         // Create price chart
         createPriceChart();
@@ -315,11 +318,14 @@
         max-width: 1200px;
         margin: 0 auto;
         padding: var(--space-md);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xl);
     }
     
     /* Results container styling */
     .ai-search-results {
-        background-color: var(--koyn-bg);
+        background-color: var(--koyn-bg) !important;
         color: var(--koyn-text);
         border-radius: var(--radius-lg);
         padding-bottom: var(--space-xl);
@@ -360,7 +366,7 @@
     
     /* Chart container styling */
     .chart-container {
-        background-color: var(--koyn-bg);
+        background-color: var(--koyn-bg) !important;
         border-radius: var(--radius-md);
         overflow: hidden;
     }
@@ -495,6 +501,41 @@
     
     .read-more:hover {
         text-decoration: underline;
+    }
+
+    /* Add this to your existing styles */
+    #resultsContainer {
+        display: none; /* Hide by default */
+        background-color: var(--koyn-bg); /* Ensure background matches theme */
+        color: var(--koyn-text);
+    }
+
+    /* Fix any potential white background issues */
+    .ai-search-results {
+        background-color: var(--koyn-bg) !important;
+    }
+
+    .chart-container {
+        background-color: var(--koyn-bg) !important;
+    }
+
+    .price-chart {
+        background-color: var(--koyn-bg-card);
+        padding: var(--space-md);
+        border-radius: var(--radius-md);
+    }
+
+    /* Ensure proper spacing */
+    .container {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xl);
+    }
+
+    /* Make sure search container has proper styling */
+    .enhanced-search-container {
+        background-color: var(--koyn-bg);
+        padding: var(--space-lg) 0;
     }
     </style>
 </body>
