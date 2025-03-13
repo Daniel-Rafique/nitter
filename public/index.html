@@ -181,87 +181,22 @@
             // Store news data globally for tooltips
             window.latestNewsData = data.news;
             
-            // Process the analysis text
+            // Process the analysis text - minimal processing needed
             const analysisText = document.getElementById('analysisText');
             let analysisContent = result.analysis;
             
-            // Process the analysis content if we have news data
-            if (data.news && data.news.length > 0) {
-                // First, extract the main content and sources section
-                let mainContent = analysisContent;
-                let sourcesSection = '';
-                
-                // Check if there's a Sources section
-                const sourcesMatch = analysisContent.match(/\*\*Sources:\*\*[\s\S]*$/i);
-                if (sourcesMatch) {
-                    mainContent = analysisContent.substring(0, sourcesMatch.index).trim();
-                    sourcesSection = sourcesMatch[0];
+            // Just remove the square brackets from the source tags
+            analysisContent = analysisContent.replace(/<span class="news-source" data-source="([^"]+)">\[([^\]]+)\]<\/span>/g, 
+                (match, source) => {
+                    return `<span class="news-source" data-source="${source}">${source}</span>`;
                 }
-                
-                // Process the main content - convert source references with proper data attributes
-                mainContent = mainContent.replace(/<span class="news-source" data-source="([^"]+)">\[([^\]]+)\]<\/span>/g, 
-                    (match, source, text) => {
-                        const newsItem = data.news.find(item => 
-                            item.source.toLowerCase().includes(source.toLowerCase()) ||
-                            source.toLowerCase().includes(item.source.toLowerCase())
-                        );
-                        
-                        if (newsItem) {
-                            // Ensure all data attributes are properly escaped and included
-                            return `<span class="news-source" 
-                                data-source="${escapeHtml(newsItem.source)}" 
-                                data-url="${escapeHtml(newsItem.url)}" 
-                                data-title="${escapeHtml(newsItem.title)}" 
-                                data-description="${escapeHtml(newsItem.description || '')}"
-                            >${newsItem.source}</span>`;
-                        }
-                        return `<span class="news-source">${source}</span>`;
-                    }
-                );
-                
-                // Also handle source names directly in the text
-                mainContent = mainContent.replace(/\b(CoinDesk|CNBC|Bloomberg|Reuters|Financial Times|Wall Street Journal|Barron's|MarketWatch|Biztoc\.com)\b/gi, 
-                    (match) => {
-                        const newsItem = data.news.find(item => 
-                            item.source.toLowerCase().includes(match.toLowerCase()) ||
-                            match.toLowerCase().includes(item.source.toLowerCase())
-                        );
-                        
-                        if (newsItem) {
-                            // Ensure all data attributes are properly escaped and included
-                            return `<span class="news-source" 
-                                data-source="${escapeHtml(newsItem.source)}" 
-                                data-url="${escapeHtml(newsItem.url)}" 
-                                data-title="${escapeHtml(newsItem.title)}" 
-                                data-description="${escapeHtml(newsItem.description || '')}"
-                            >${newsItem.source}</span>`;
-                        }
-                        return match;
-                    }
-                );
-                
-                // Format the main content into paragraphs
-                const paragraphs = mainContent.split(/\n\n|\r\n\r\n/);
-                mainContent = paragraphs.map(p => `<p>${p.trim()}</p>`).join('');
-                
-                // Create a clean sources section
-                let formattedSourcesSection = '<div class="sources-section"><h4>Sources:</h4><ul class="sources-list">';
-                
-                data.news.forEach((newsItem) => {
-                    formattedSourcesSection += `<li><a href="${newsItem.url}" target="_blank">${newsItem.source}</a></li>`;
-                });
-                
-                formattedSourcesSection += '</ul></div>';
-                
-                // Combine the processed main content with the formatted sources section
-                analysisContent = mainContent + formattedSourcesSection;
-            }
+            );
             
-            // Set the enhanced analysis text
+            // Set the analysis text
             analysisText.innerHTML = analysisContent;
             
             // Set up tooltips for news sources
-            setupNewsSourceHovers();
+            setupNewsSourceHovers(data.news);
             
             // Show the results container
             resultsContainer.style.display = 'block';
@@ -270,102 +205,75 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         
-        function setupNewsSourceHovers() {
+        function setupNewsSourceHovers(newsData) {
             // Find all news source spans
             const newsSourceSpans = document.querySelectorAll('.news-source');
             
             newsSourceSpans.forEach(span => {
-                // First, remove any existing tooltips
-                const existingTooltip = span.querySelector('.news-tooltip');
-                if (existingTooltip) {
-                    span.removeChild(existingTooltip);
-                }
+                const source = span.getAttribute('data-source');
                 
-                // Create tooltip
-                const tooltip = document.createElement('div');
-                tooltip.className = 'news-tooltip';
+                // Find matching news item
+                const matchingNews = newsData.find(item => 
+                    item.source.toLowerCase().includes(source.toLowerCase()) ||
+                    source.toLowerCase().includes(item.source.toLowerCase())
+                );
                 
-                // Get the source name from the span
-                const sourceName = span.textContent.trim();
-                
-                // Find matching news item in the global data
-                let matchingNews = null;
-                if (window.latestNewsData) {
-                    matchingNews = window.latestNewsData.find(item => 
-                        item.source.toLowerCase().includes(sourceName.toLowerCase()) ||
-                        sourceName.toLowerCase().includes(item.source.toLowerCase())
-                    );
-                }
-                
-                // Use data from matching news or from data attributes
-                const title = (matchingNews && matchingNews.title) ? matchingNews.title : (span.dataset.title || 'Article title not available');
-                const description = (matchingNews && matchingNews.description) ? matchingNews.description : (span.dataset.description || 'No description available');
-                const source = (matchingNews && matchingNews.source) ? matchingNews.source : (span.dataset.source || sourceName);
-                const url = (matchingNews && matchingNews.url) ? matchingNews.url : (span.dataset.url || '#');
-                
-                // Update the span's data attributes with the found data
                 if (matchingNews) {
-                    span.dataset.title = matchingNews.title;
-                    span.dataset.description = matchingNews.description || '';
-                    span.dataset.source = matchingNews.source;
-                    span.dataset.url = matchingNews.url;
+                    // Create tooltip with Koynlabs styling
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'news-tooltip';
+                    
+                    tooltip.innerHTML = `
+                        <strong style="color: var(--koyn-primary-light);">${matchingNews.title}</strong>
+                        <p style="margin: 8px 0; color: var(--koyn-text-secondary);">${matchingNews.description || ''}</p>
+                        <small style="color: var(--koyn-text-secondary);">Source: ${matchingNews.source}</small>
+                        <div class="tooltip-footer">
+                            <a href="${matchingNews.url}" target="_blank" class="read-more">Read Full Article</a>
+                        </div>
+                    `;
+                    
+                    span.appendChild(tooltip);
+                    
+                    // Show/hide tooltip on hover
+                    span.addEventListener('mouseenter', function() {
+                        const rect = this.getBoundingClientRect();
+                        const tooltipHeight = tooltip.offsetHeight || 200;
+                        
+                        // Position tooltip based on available space
+                        if (rect.top < tooltipHeight + 20) {
+                            tooltip.classList.add('bottom');
+                            tooltip.classList.remove('top');
+                        } else {
+                            tooltip.classList.add('top');
+                            tooltip.classList.remove('bottom');
+                        }
+                        
+                        // Handle horizontal positioning
+                        const viewportWidth = window.innerWidth;
+                        if (rect.left < 150) {
+                            tooltip.classList.add('left');
+                            tooltip.classList.remove('right');
+                        } else if (viewportWidth - rect.right < 150) {
+                            tooltip.classList.add('right');
+                            tooltip.classList.remove('left');
+                        } else {
+                            tooltip.classList.remove('left');
+                            tooltip.classList.remove('right');
+                        }
+                        
+                        tooltip.style.display = 'block';
+                    });
+                    
+                    span.addEventListener('mouseleave', function() {
+                        tooltip.style.display = 'none';
+                    });
+                    
+                    // Make clickable to open the news article
+                    span.style.cursor = 'pointer';
+                    span.addEventListener('click', function() {
+                        window.open(matchingNews.url, '_blank');
+                    });
                 }
-                
-                tooltip.innerHTML = `
-                    <strong style="color: var(--koyn-primary-light);">${title}</strong>
-                    <p style="margin: 8px 0; color: var(--koyn-text-secondary);">${description}</p>
-                    <small style="color: var(--koyn-text-secondary);">Source: ${source}</small>
-                    <div class="tooltip-footer">
-                        <a href="${url}" target="_blank" class="read-more">Read Full Article</a>
-                    </div>
-                `;
-                
-                span.appendChild(tooltip);
-                
-                // Show/hide tooltip on hover
-                span.addEventListener('mouseenter', function() {
-                    const rect = this.getBoundingClientRect();
-                    const tooltipHeight = tooltip.offsetHeight || 200;
-                    
-                    // Position tooltip based on available space
-                    if (rect.top < tooltipHeight + 20) {
-                        tooltip.classList.add('bottom');
-                        tooltip.classList.remove('top');
-                    } else {
-                        tooltip.classList.add('top');
-                        tooltip.classList.remove('bottom');
-                    }
-                    
-                    // Handle horizontal positioning
-                    const viewportWidth = window.innerWidth;
-                    if (rect.left < 150) {
-                        tooltip.classList.add('left');
-                        tooltip.classList.remove('right');
-                    } else if (viewportWidth - rect.right < 150) {
-                        tooltip.classList.add('right');
-                        tooltip.classList.remove('left');
-                    } else {
-                        tooltip.classList.remove('left');
-                        tooltip.classList.remove('right');
-                    }
-                    
-                    tooltip.style.display = 'block';
-                });
-                
-                span.addEventListener('mouseleave', function() {
-                    tooltip.style.display = 'none';
-                });
-                
-                // Fix the click behavior to properly open the article URL
-                span.addEventListener('click', function(e) {
-                    e.preventDefault(); // Prevent default behavior
-                    e.stopPropagation(); // Stop event propagation
-                    
-                    const articleUrl = this.dataset.url;
-                    if (articleUrl && articleUrl !== '#') {
-                        window.open(articleUrl, '_blank');
-                    }
-                });
             });
         }
         
