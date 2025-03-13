@@ -59,23 +59,26 @@
             </form>
 
 
-                    <!-- Results container moved to the top -->
-        <div id="resultsContainer" style="display: none;" class="ai-search-results">
-            <div class="ai-search-header">
-                <h2 id="assetName"></h2>
-                <div class="asset-price">Current Price: $<span id="assetPrice"></span></div>
-                <div id="sentimentBadge" class="sentiment-indicator"></div>
+            <!-- Results container moved to the top -->
+            <div id="resultsContainer" style="display: none;" class="ai-search-results">
+                <div class="ai-search-header">
+                    <h2 id="assetName"></h2>
+                    <div class="asset-price">Current Price: $<span id="assetPrice"></span></div>
+                    <div class="sentiment-container">
+                        <span class="sentiment-label">Sentiment:</span>
+                        <div id="sentimentBadge" class="sentiment-indicator"></div>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <img id="priceChart" src="" alt="Price Chart">
+                </div>
+                
+                <div class="ai-search-summary">
+                    <h3>Analysis</h3>
+                    <div id="analysisText"></div>
+                </div>
             </div>
-            
-            <div class="chart-container">
-                <img id="priceChart" src="" alt="Price Chart">
-            </div>
-            
-            <div class="ai-search-summary">
-                <h3>Analysis</h3>
-                <div id="analysisText"></div>
-            </div>
-        </div>
             
             <div class="powered-by">
                 Search Powered by <a href="https://koyn.ai" target="_blank">Koyn.ai</a>
@@ -157,7 +160,7 @@
             
             // Update asset name and price
             document.getElementById('assetName').textContent = result.asset.charAt(0).toUpperCase() + result.asset.slice(1);
-            document.getElementById('assetPrice').textContent = result.asset_price;
+            document.getElementById('assetPrice').textContent = result.asset_price.toLocaleString();
             
             // Update sentiment badge with Koynlabs styling
             const sentimentBadge = document.getElementById('sentimentBadge');
@@ -185,16 +188,38 @@
             if (data.news && data.news.length > 0) {
                 window.latestNewsData = data.news;
                 
+                // Remove square brackets from source tags
+                analysisContent = analysisContent.replace(/<span class="news-source" data-source="([^"]+)">\[([^\]]+)\]<\/span>/g, 
+                    (match, source) => {
+                        return `<span class="news-source" data-source="${source}">${source}</span>`;
+                    }
+                );
+                
                 // Check if we need to add a sources section at the bottom
                 if (!analysisContent.toLowerCase().includes('sources:')) {
                     // Add a sources section at the bottom
-                    analysisContent += '<div class="sources-section"><h4>Sources:</h4><ol class="sources-list">';
+                    analysisContent += '<div class="sources-section"><h4>Sources:</h4><ul class="sources-list">';
                     
-                    data.news.forEach((newsItem, index) => {
-                        analysisContent += `<li><a href="${newsItem.url}" target="_blank">${newsItem.source}: ${newsItem.title}</a></li>`;
+                    data.news.forEach((newsItem) => {
+                        analysisContent += `<li><a href="${newsItem.url}" target="_blank">${newsItem.source}</a></li>`;
                     });
                     
-                    analysisContent += '</ol></div>';
+                    analysisContent += '</ul></div>';
+                } else {
+                    // Replace the existing sources section with just links
+                    analysisContent = analysisContent.replace(/\*\*Sources:\*\*\s*\n\s*\d+\.\s*\[([^\]]+)\]\([^)]+\)/g, 
+                        (match, sourceName) => {
+                            const newsItem = data.news.find(item => 
+                                item.source.toLowerCase().includes(sourceName.toLowerCase()) ||
+                                sourceName.toLowerCase().includes(item.source.toLowerCase())
+                            );
+                            
+                            if (newsItem) {
+                                return `<div class="sources-section"><h4>Sources:</h4><ul class="sources-list"><li><a href="${newsItem.url}" target="_blank">${newsItem.source}</a></li>`;
+                            }
+                            return match;
+                        }
+                    );
                 }
                 
                 // Process the analysis text to ensure proper formatting
@@ -255,7 +280,7 @@
             analysisText.innerHTML = analysisContent;
             
             // Make the news source spans in the analysis text interactive
-            setupNewsSourceHovers();
+            setupNewsSourceHovers(data.news);
             
             // Show the results container
             resultsContainer.style.display = 'block';
@@ -264,7 +289,7 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         
-        function setupNewsSourceHovers() {
+        function setupNewsSourceHovers(newsData) {
             // Find all news source spans
             const newsSourceSpans = document.querySelectorAll('.news-source');
             
@@ -272,8 +297,9 @@
                 const source = span.getAttribute('data-source');
                 
                 // Find matching news item
-                const matchingNews = window.latestNewsData?.find(item => 
-                    item.source.toLowerCase().includes(source.toLowerCase())
+                const matchingNews = newsData.find(item => 
+                    item.source.toLowerCase().includes(source.toLowerCase()) ||
+                    source.toLowerCase().includes(item.source.toLowerCase())
                 );
                 
                 if (matchingNews) {
@@ -343,6 +369,7 @@
         max-width: 800px;
         margin-left: auto;
         margin-right: auto;
+        padding: var(--space-lg);
     }
     
     /* Fixed search container styling */
@@ -361,6 +388,25 @@
     
     .asset-price {
         color: var(--koyn-text-secondary);
+        margin-bottom: var(--space-sm);
+    }
+    
+    .sentiment-container {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin-bottom: var(--space-md);
+    }
+    
+    .sentiment-label {
+        color: var(--koyn-text-secondary);
+    }
+    
+    .sentiment-indicator {
+        padding: var(--space-xs) var(--space-sm);
+        border-radius: var(--radius-sm);
+        font-weight: 500;
+        display: inline-block;
     }
     
     .chart-container {
