@@ -160,7 +160,7 @@
             
             // Update asset name and price
             document.getElementById('assetName').textContent = result.asset.charAt(0).toUpperCase() + result.asset.slice(1);
-            document.getElementById('assetPrice').textContent = result.asset_price.toLocaleString();
+            document.getElementById('assetPrice').textContent = result.asset_price === 'N/A' ? 'Not Available' : result.asset_price.toLocaleString();
             
             // Update sentiment badge with Koynlabs styling
             const sentimentBadge = document.getElementById('sentimentBadge');
@@ -178,6 +178,9 @@
             // Update price chart
             document.getElementById('priceChart').src = result.price_chart;
             
+            // Store news data globally for tooltips
+            window.latestNewsData = data.news;
+            
             // Process the analysis text
             const analysisText = document.getElementById('analysisText');
             let analysisContent = result.analysis;
@@ -189,18 +192,18 @@
                 let sourcesSection = '';
                 
                 // Check if there's a Sources section
-                const sourcesMatch = analysisContent.match(/Sources:[\s\S]*$/i);
+                const sourcesMatch = analysisContent.match(/\*\*Sources:\*\*[\s\S]*$/i);
                 if (sourcesMatch) {
                     mainContent = analysisContent.substring(0, sourcesMatch.index).trim();
                     sourcesSection = sourcesMatch[0];
                 }
                 
                 // Process the main content - convert source references with proper data attributes
-                mainContent = mainContent.replace(/\b(CoinDesk|CNBC|Bloomberg|Reuters|Financial Times|Wall Street Journal|Barron's|MarketWatch)\b/gi, 
-                    (match) => {
+                mainContent = mainContent.replace(/<span class="news-source" data-source="([^"]+)">\[([^\]]+)\]<\/span>/g, 
+                    (match, source, text) => {
                         const newsItem = data.news.find(item => 
-                            item.source.toLowerCase().includes(match.toLowerCase()) ||
-                            match.toLowerCase().includes(item.source.toLowerCase())
+                            item.source.toLowerCase().includes(source.toLowerCase()) ||
+                            source.toLowerCase().includes(item.source.toLowerCase())
                         );
                         
                         if (newsItem) {
@@ -212,16 +215,19 @@
                                 data-description="${escapeHtml(newsItem.description || '')}"
                             >${newsItem.source}</span>`;
                         }
-                        return match;
+                        return `<span class="news-source">${source}</span>`;
                     }
                 );
                 
-                // Also handle numbered references like [1], [2], etc. with proper data attributes
-                mainContent = mainContent.replace(/\[(\d+)\]/g, 
-                    (match, number) => {
-                        const index = parseInt(number) - 1;
-                        if (data.news[index]) {
-                            const newsItem = data.news[index];
+                // Also handle source names directly in the text
+                mainContent = mainContent.replace(/\b(CoinDesk|CNBC|Bloomberg|Reuters|Financial Times|Wall Street Journal|Barron's|MarketWatch|Biztoc\.com)\b/gi, 
+                    (match) => {
+                        const newsItem = data.news.find(item => 
+                            item.source.toLowerCase().includes(match.toLowerCase()) ||
+                            match.toLowerCase().includes(item.source.toLowerCase())
+                        );
+                        
+                        if (newsItem) {
                             // Ensure all data attributes are properly escaped and included
                             return `<span class="news-source" 
                                 data-source="${escapeHtml(newsItem.source)}" 
@@ -269,15 +275,41 @@
             const newsSourceSpans = document.querySelectorAll('.news-source');
             
             newsSourceSpans.forEach(span => {
+                // First, remove any existing tooltips
+                const existingTooltip = span.querySelector('.news-tooltip');
+                if (existingTooltip) {
+                    span.removeChild(existingTooltip);
+                }
+                
                 // Create tooltip
                 const tooltip = document.createElement('div');
                 tooltip.className = 'news-tooltip';
                 
-                // Make sure we have all the data we need
-                const title = span.dataset.title || 'Article title not available';
-                const description = span.dataset.description || 'No description available';
-                const source = span.dataset.source || 'Unknown source';
-                const url = span.dataset.url || '#';
+                // Get the source name from the span
+                const sourceName = span.textContent.trim();
+                
+                // Find matching news item in the global data
+                let matchingNews = null;
+                if (window.latestNewsData) {
+                    matchingNews = window.latestNewsData.find(item => 
+                        item.source.toLowerCase().includes(sourceName.toLowerCase()) ||
+                        sourceName.toLowerCase().includes(item.source.toLowerCase())
+                    );
+                }
+                
+                // Use data from matching news or from data attributes
+                const title = (matchingNews && matchingNews.title) ? matchingNews.title : (span.dataset.title || 'Article title not available');
+                const description = (matchingNews && matchingNews.description) ? matchingNews.description : (span.dataset.description || 'No description available');
+                const source = (matchingNews && matchingNews.source) ? matchingNews.source : (span.dataset.source || sourceName);
+                const url = (matchingNews && matchingNews.url) ? matchingNews.url : (span.dataset.url || '#');
+                
+                // Update the span's data attributes with the found data
+                if (matchingNews) {
+                    span.dataset.title = matchingNews.title;
+                    span.dataset.description = matchingNews.description || '';
+                    span.dataset.source = matchingNews.source;
+                    span.dataset.url = matchingNews.url;
+                }
                 
                 tooltip.innerHTML = `
                     <strong style="color: var(--koyn-primary-light);">${title}</strong>
