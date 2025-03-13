@@ -184,20 +184,68 @@
             // First, store the original analysis text
             let analysisContent = result.analysis;
             
-            // Store news data globally for tooltips
+            // Process the analysis content
             if (data.news && data.news.length > 0) {
-                window.latestNewsData = data.news;
-                
-                // Remove square brackets from source tags
+                // Remove square brackets from source tags and convert markdown links to our format
                 analysisContent = analysisContent.replace(/<span class="news-source" data-source="([^"]+)">\[([^\]]+)\]<\/span>/g, 
                     (match, source) => {
                         return `<span class="news-source" data-source="${source}">${source}</span>`;
                     }
                 );
                 
-                // Check if we need to add a sources section at the bottom
-                if (!analysisContent.toLowerCase().includes('sources:')) {
-                    // Add a sources section at the bottom
+                // Convert markdown links in the sources section to our format
+                analysisContent = analysisContent.replace(/\[([^\]]+)\]\(([^)]+)\)/g, 
+                    (match, text, url) => {
+                        const newsItem = data.news.find(item => 
+                            item.source.toLowerCase().includes(text.toLowerCase()) ||
+                            text.toLowerCase().includes(item.source.toLowerCase())
+                        );
+                        
+                        if (newsItem) {
+                            return `<a href="${newsItem.url}" target="_blank">${newsItem.source}</a>`;
+                        }
+                        return `<a href="${url}" target="_blank">${text}</a>`;
+                    }
+                );
+                
+                // Format the sources section
+                if (analysisContent.includes('**Sources:**')) {
+                    analysisContent = analysisContent.replace(/\*\*Sources:\*\*\s*([\s\S]*?)(?=<\/p>|$)/, 
+                        (match, sourcesList) => {
+                            // Extract sources
+                            const sourceItems = sourcesList.trim().split(/\s*\d+\.\s*/).filter(item => item.trim());
+                            
+                            let sourcesHtml = '<div class="sources-section"><h4>Sources:</h4><ul class="sources-list">';
+                            
+                            sourceItems.forEach(item => {
+                                // Clean up the item and extract just the source name
+                                const cleanItem = item.trim().replace(/<a[^>]*>([^<]+)<\/a>/, '$1');
+                                
+                                // Find matching news item
+                                const newsItem = data.news.find(news => 
+                                    news.source.toLowerCase().includes(cleanItem.toLowerCase()) ||
+                                    cleanItem.toLowerCase().includes(news.source.toLowerCase())
+                                );
+                                
+                                if (newsItem) {
+                                    sourcesHtml += `<li><a href="${newsItem.url}" target="_blank">${newsItem.source}</a></li>`;
+                                } else {
+                                    // Use the original link if we can't match
+                                    const linkMatch = item.match(/<a href="([^"]+)"[^>]*>([^<]+)<\/a>/);
+                                    if (linkMatch) {
+                                        sourcesHtml += `<li><a href="${linkMatch[1]}" target="_blank">${linkMatch[2]}</a></li>`;
+                                    } else {
+                                        sourcesHtml += `<li>${item}</li>`;
+                                    }
+                                }
+                            });
+                            
+                            sourcesHtml += '</ul></div>';
+                            return sourcesHtml;
+                        }
+                    );
+                } else {
+                    // If no sources section, add one
                     analysisContent += '<div class="sources-section"><h4>Sources:</h4><ul class="sources-list">';
                     
                     data.news.forEach((newsItem) => {
@@ -205,21 +253,6 @@
                     });
                     
                     analysisContent += '</ul></div>';
-                } else {
-                    // Replace the existing sources section with just links
-                    analysisContent = analysisContent.replace(/\*\*Sources:\*\*\s*\n\s*\d+\.\s*\[([^\]]+)\]\([^)]+\)/g, 
-                        (match, sourceName) => {
-                            const newsItem = data.news.find(item => 
-                                item.source.toLowerCase().includes(sourceName.toLowerCase()) ||
-                                sourceName.toLowerCase().includes(item.source.toLowerCase())
-                            );
-                            
-                            if (newsItem) {
-                                return `<div class="sources-section"><h4>Sources:</h4><ul class="sources-list"><li><a href="${newsItem.url}" target="_blank">${newsItem.source}</a></li>`;
-                            }
-                            return match;
-                        }
-                    );
                 }
                 
                 // Process the analysis text to ensure proper formatting
@@ -303,6 +336,12 @@
                 );
                 
                 if (matchingNews) {
+                    // Remove any existing tooltips
+                    const existingTooltip = span.querySelector('.news-tooltip');
+                    if (existingTooltip) {
+                        span.removeChild(existingTooltip);
+                    }
+                    
                     // Create tooltip with Koynlabs styling
                     const tooltip = document.createElement('div');
                     tooltip.className = 'news-tooltip';
@@ -319,7 +358,7 @@
                     span.appendChild(tooltip);
                     
                     // Show/hide tooltip on hover with intelligent positioning
-                    span.addEventListener('mouseenter', () => {
+                    span.addEventListener('mouseenter', function() {
                         // Check position for optimal tooltip placement
                         const spanRect = span.getBoundingClientRect();
                         const tooltipHeight = tooltip.offsetHeight || 200; // Estimate if not rendered yet
@@ -327,7 +366,9 @@
                         // Position based on available space
                         if (spanRect.top < tooltipHeight + 20) {
                             tooltip.classList.add('bottom');
+                            tooltip.classList.remove('top');
                         } else {
+                            tooltip.classList.add('top');
                             tooltip.classList.remove('bottom');
                         }
                         
@@ -335,22 +376,64 @@
                         const viewportWidth = window.innerWidth;
                         if (spanRect.left < 150) {
                             tooltip.classList.add('left');
+                            tooltip.classList.remove('right');
                         } else if (viewportWidth - spanRect.right < 150) {
                             tooltip.classList.add('right');
+                            tooltip.classList.remove('left');
+                        } else {
+                            tooltip.classList.remove('left');
+                            tooltip.classList.remove('right');
                         }
                         
                         tooltip.style.display = 'block';
                     });
                     
-                    span.addEventListener('mouseleave', () => {
+                    span.addEventListener('mouseleave', function() {
                         tooltip.style.display = 'none';
                     });
                     
                     // Make clickable to open the news article
                     span.style.cursor = 'pointer';
-                    span.addEventListener('click', () => {
+                    span.addEventListener('click', function() {
                         window.open(matchingNews.url, '_blank');
                     });
+                }
+            });
+            
+            // Also handle any numbered references in the text [1], [2], etc.
+            const numberRefs = document.querySelectorAll('a[href^="#ref"]');
+            numberRefs.forEach(ref => {
+                const refNumber = ref.textContent.match(/\d+/);
+                if (refNumber && refNumber[0] && newsData[parseInt(refNumber[0]) - 1]) {
+                    const newsItem = newsData[parseInt(refNumber[0]) - 1];
+                    
+                    // Create tooltip
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'news-tooltip';
+                    
+                    tooltip.innerHTML = `
+                        <strong style="color: var(--koyn-primary-light);">${newsItem.title}</strong>
+                        <p style="margin: 8px 0; color: var(--koyn-text-secondary);">${newsItem.description || ''}</p>
+                        <small style="color: var(--koyn-text-secondary);">Source: ${newsItem.source}</small>
+                        <div class="tooltip-footer">
+                            <a href="${newsItem.url}" target="_blank" class="read-more">Read Full Article</a>
+                        </div>
+                    `;
+                    
+                    ref.appendChild(tooltip);
+                    
+                    // Show/hide tooltip on hover
+                    ref.addEventListener('mouseenter', function() {
+                        tooltip.style.display = 'block';
+                    });
+                    
+                    ref.addEventListener('mouseleave', function() {
+                        tooltip.style.display = 'none';
+                    });
+                    
+                    // Update href to actual news URL
+                    ref.href = newsItem.url;
+                    ref.target = '_blank';
                 }
             });
         }
@@ -430,6 +513,7 @@
         text-decoration: underline;
         display: inline-block;
         margin: 0 2px;
+        z-index: 1;
     }
     
     .news-tooltip {
@@ -440,37 +524,43 @@
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         position: absolute;
         display: none;
-        bottom: 100%;
         left: 50%;
         transform: translateX(-50%);
-        margin-bottom: 10px;
         background-color: var(--koyn-bg-panel);
         color: var(--koyn-text);
         border: 1px solid var(--koyn-border);
         text-align: left;
+        pointer-events: none;
+    }
+    
+    .news-tooltip.top {
+        bottom: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .news-tooltip.bottom {
+        top: 100%;
+        margin-top: 10px;
     }
     
     .news-tooltip:after {
         content: '';
         position: absolute;
+        border-width: 5px;
+        border-style: solid;
+    }
+    
+    .news-tooltip.top:after {
         top: 100%;
         left: 50%;
         margin-left: -5px;
-        border-width: 5px;
-        border-style: solid;
         border-color: var(--koyn-bg-panel) transparent transparent transparent;
     }
     
-    .news-tooltip.bottom {
-        bottom: auto;
-        top: 100%;
-        margin-bottom: 0;
-        margin-top: 10px;
-    }
-    
     .news-tooltip.bottom:after {
-        top: auto;
         bottom: 100%;
+        left: 50%;
+        margin-left: -5px;
         border-color: transparent transparent var(--koyn-bg-panel) transparent;
     }
     
@@ -494,6 +584,15 @@
         left: auto;
         right: 10px;
         margin-left: 0;
+    }
+    
+    /* Make tooltips work with pointer events */
+    .news-tooltip .tooltip-footer {
+        pointer-events: auto;
+    }
+    
+    .news-tooltip .read-more {
+        pointer-events: auto;
     }
     
     /* Loading indicator */
