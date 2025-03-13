@@ -675,3 +675,174 @@ nav {
     padding: var(--space-sm);
   }
 } 
+  /* Results container styling */
+  #resultsContainer {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.results-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.results-header h2 {
+    margin: 0;
+    margin-right: 15px;
+    font-size: 24px;
+}
+
+.asset-price {
+    font-size: 18px;
+    font-weight: 500;
+    margin-right: 15px;
+}
+
+.sentiment-badge {
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.sentiment-badge.positive {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.sentiment-badge.negative {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.sentiment-badge.neutral {
+    background-color: #e2e3e5;
+    color: #383d41;
+}
+
+.chart-container {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.chart-container img {
+    max-width: 100%;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.analysis-container {
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.news-container ul {
+    padding-left: 20px;
+}
+
+.news-container li {
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.news-source-info {
+    color: #6c757d;
+    font-size: 0.9em;
+}
+
+/* News source hover styling */
+.news-source {
+    position: relative;
+    font-weight: 500;
+    color: #007bff;
+    text-decoration: underline;
+    cursor: help;
+}
+
+.news-tooltip {
+    display: none;
+    position: absolute;
+    z-index: 100;
+    width: 300px;
+    padding: 10px;
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    font-weight: normal;
+    color: #212529;
+    text-align: left;
+    line-height: 1.5;
+    /* Position the tooltip intelligently */
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 10px;
+}
+
+/* Add a media query for mobile devices */
+@media (max-width: 768px) {
+    .news-tooltip {
+        width: 250px;
+        left: 0;
+        transform: none;
+    }
+}
+
+/* Add a class for tooltips that would be cut off at the top */
+.news-tooltip.bottom {
+    bottom: auto;
+    top: 100%;
+    margin-bottom: 0;
+    margin-top: 10px;
+}
+
+.news-tooltip:after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+}
+
+.news-tooltip:after {
+    top: 100%;
+    border-color: white transparent transparent transparent;
+}
+
+.news-tooltip.bottom:after {
+    top: auto;
+    bottom: 100%;
+    border-color: transparent transparent white transparent;
+}
+
+/* Loading indicator */
+.loading-indicator {
+    position: absolute;
+    right: 50px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    border: 2px solid rgba(0, 123, 255, 0.2);
+    border-radius: 50%;
+    border-top-color: #007bff;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
