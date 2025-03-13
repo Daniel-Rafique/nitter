@@ -49,8 +49,8 @@
 
         <!-- Fixed search container at the bottom -->
         <div class="enhanced-search-container" id="searchContainer">
-            <!-- <h1 class="search-heading">Discover Market Insights</h1>
-            <p class="search-subheading">Real-time data for Bitcoin, Ethereum, Solana, and DeFi</p> -->
+            <h1 class="search-heading">Discover Market Insights</h1>
+            <p class="search-subheading">Real-time data for Bitcoin, Ethereum, Solana, and DeFi</p>
             
             <form id="sentimentForm" method="post" autocomplete="off" class="enhanced-search-form">
                 <input type="text" name="question" autofocus placeholder="Search for insights..." dir="auto">
@@ -185,70 +185,16 @@
             if (data.news && data.news.length > 0) {
                 window.latestNewsData = data.news;
                 
-                // Process the analysis text to fix the news source tags
-                // Replace [SourceName] with properly formatted span tags
-                const sourceRegex = /\[(.*?)\]/g;
-                analysisContent = analysisContent.replace(sourceRegex, (match, sourceName) => {
-                    return `<span class="news-source" data-source="${sourceName}">${sourceName}</span>`;
-                });
-                
                 // Check if we need to add a sources section at the bottom
-                if (!analysisContent.toLowerCase().includes('<div class="sources-section">')) {
-                    // Extract any existing sources section in plain text format
-                    let sourcesSection = '';
-                    const sourcesSectionMatch = analysisContent.match(/\*\*Sources:\*\*\s*([\s\S]+)$/);
+                if (!analysisContent.toLowerCase().includes('sources:')) {
+                    // Add a sources section at the bottom
+                    analysisContent += '<div class="sources-section"><h4>Sources:</h4><ol class="sources-list">';
                     
-                    if (sourcesSectionMatch) {
-                        // Remove the plain text sources section from the content
-                        analysisContent = analysisContent.replace(/\*\*Sources:\*\*\s*([\s\S]+)$/, '');
-                        
-                        // Create a properly formatted sources section
-                        sourcesSection = '<div class="sources-section"><h4>Sources:</h4><ol class="sources-list">';
-                        
-                        // Try to parse the existing sources
-                        const sourceLines = sourcesSectionMatch[1].trim().split(/\s*\d+\.\s*/).filter(line => line.trim());
-                        
-                        if (sourceLines.length > 0) {
-                            sourceLines.forEach(line => {
-                                // Extract URL and source name if available
-                                const urlMatch = line.match(/\[(.*?)\]\((https?:\/\/[^\s)]+)\)/);
-                                if (urlMatch) {
-                                    const sourceName = urlMatch[1];
-                                    const sourceUrl = urlMatch[2];
-                                    
-                                    // Find matching news item for title
-                                    const matchingNews = window.latestNewsData.find(item => 
-                                        item.source.toLowerCase().includes(sourceName.toLowerCase())
-                                    );
-                                    
-                                    const title = matchingNews ? matchingNews.title : sourceName;
-                                    sourcesSection += `<li><a href="${sourceUrl}" target="_blank">${sourceName}: ${title}</a></li>`;
-                                } else {
-                                    // Simple text entry
-                                    sourcesSection += `<li>${line.trim()}</li>`;
-                                }
-                            });
-                        } else {
-                            // If we couldn't parse the existing sources, use our news data
-                            data.news.forEach((newsItem, index) => {
-                                sourcesSection += `<li><a href="${newsItem.url}" target="_blank">${newsItem.source}: ${newsItem.title}</a></li>`;
-                            });
-                        }
-                        
-                        sourcesSection += '</ol></div>';
-                    } else {
-                        // No existing sources section, create one from our news data
-                        sourcesSection = '<div class="sources-section"><h4>Sources:</h4><ol class="sources-list">';
-                        
-                        data.news.forEach((newsItem, index) => {
-                            sourcesSection += `<li><a href="${newsItem.url}" target="_blank">${newsItem.source}: ${newsItem.title}</a></li>`;
-                        });
-                        
-                        sourcesSection += '</ol></div>';
-                    }
+                    data.news.forEach((newsItem, index) => {
+                        analysisContent += `<li><a href="${newsItem.url}" target="_blank">${newsItem.source}: ${newsItem.title}</a></li>`;
+                    });
                     
-                    // Add the formatted sources section
-                    analysisContent += sourcesSection;
+                    analysisContent += '</ol></div>';
                 }
                 
                 // Process the analysis text to ensure proper formatting
@@ -327,8 +273,7 @@
                 
                 // Find matching news item
                 const matchingNews = window.latestNewsData?.find(item => 
-                    item.source.toLowerCase().includes(source.toLowerCase()) ||
-                    source.toLowerCase().includes(item.source.toLowerCase())
+                    item.source.toLowerCase().includes(source.toLowerCase())
                 );
                 
                 if (matchingNews) {
@@ -338,7 +283,7 @@
                     
                     tooltip.innerHTML = `
                         <strong style="color: var(--koyn-primary-light);">${matchingNews.title}</strong>
-                        <p style="margin: 8px 0; color: var(--koyn-text-secondary);">${matchingNews.description || 'No description available.'}</p>
+                        <p style="margin: 8px 0; color: var(--koyn-text-secondary);">${matchingNews.description || ''}</p>
                         <small style="color: var(--koyn-text-secondary);">Source: ${matchingNews.source}</small>
                         <div class="tooltip-footer">
                             <a href="${matchingNews.url}" target="_blank" class="read-more">Read Full Article</a>
@@ -379,29 +324,6 @@
                     span.style.cursor = 'pointer';
                     span.addEventListener('click', () => {
                         window.open(matchingNews.url, '_blank');
-                    });
-                } else {
-                    // If no matching news item found, create a generic tooltip
-                    console.log(`No matching news item found for source: ${source}`);
-                    
-                    // Create a generic tooltip
-                    const tooltip = document.createElement('div');
-                    tooltip.className = 'news-tooltip';
-                    
-                    tooltip.innerHTML = `
-                        <strong style="color: var(--koyn-primary-light);">${source}</strong>
-                        <p style="margin: 8px 0; color: var(--koyn-text-secondary);">Source information not available.</p>
-                    `;
-                    
-                    span.appendChild(tooltip);
-                    
-                    // Show/hide tooltip on hover
-                    span.addEventListener('mouseenter', () => {
-                        tooltip.style.display = 'block';
-                    });
-                    
-                    span.addEventListener('mouseleave', () => {
-                        tooltip.style.display = 'none';
                     });
                 }
             });
@@ -462,13 +384,6 @@
         text-decoration: underline;
         display: inline-block;
         margin: 0 2px;
-        padding: 0 2px;
-        border-radius: 3px;
-        background-color: rgba(99, 102, 241, 0.1);
-    }
-    
-    .news-source:hover {
-        background-color: rgba(99, 102, 241, 0.2);
     }
     
     .news-tooltip {
@@ -560,27 +475,23 @@
     }
     
     .sources-section h4 {
-        font-size: 1.1rem;
-        margin-bottom: var(--space-md);
+        font-size: 1rem;
+        margin-bottom: var(--space-sm);
         color: var(--koyn-text);
-        font-weight: 600;
     }
     
     .sources-list {
         padding-left: var(--space-lg);
-        margin-top: 0;
     }
     
     .sources-list li {
-        margin-bottom: var(--space-sm);
-        line-height: 1.4;
+        margin-bottom: var(--space-xs);
     }
     
     .sources-list a {
         color: var(--koyn-primary-light);
         text-decoration: none;
         transition: color 0.2s ease;
-        font-weight: 500;
     }
     
     .sources-list a:hover {
