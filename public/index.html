@@ -46,37 +46,53 @@
     </nav>
 
     <div class="container">
+
         <!-- Fixed search container at the bottom -->
         <div class="enhanced-search-container" id="searchContainer">
+            <!-- <h1 class="search-heading">Discover Market Insights</h1>
+            <p class="search-subheading">Real-time data for Bitcoin, Ethereum, Solana, and DeFi</p> -->
+            
             <form id="sentimentForm" method="post" autocomplete="off" class="enhanced-search-form">
                 <input type="text" name="question" autofocus placeholder="Search for insights..." dir="auto">
                 <input type="hidden" name="limit" value="50">
                 <button type="submit" class="search-button"><i class="icon-search"></i></button>
             </form>
 
-            <!-- Results container with Koynlabs styling -->
-            <div id="resultsContainer" style="display: none;" class="ai-search-results">
-                <div class="ai-search-header">
-                    <div class="asset-info">
-                        <h2 id="assetName"></h2>
-                        <div class="asset-price">Current Price: $<span id="assetPrice"></span></div>
-                    </div>
-                    <div id="sentimentBadge" class="sentiment-indicator"></div>
-                </div>
-                
-                <div class="chart-container">
-                    <img id="priceChart" src="" alt="Price Chart">
-                </div>
-                
-                <div class="ai-search-summary">
-                    <h3>Analysis</h3>
-                    <div id="analysisText" class="analysis-content"></div>
-                </div>
+
+                    <!-- Results container moved to the top -->
+        <div id="resultsContainer" style="display: none;" class="ai-search-results">
+            <div class="ai-search-header">
+                <h2 id="assetName"></h2>
+                <div class="asset-price">Current Price: $<span id="assetPrice"></span></div>
+                <div id="sentimentBadge" class="sentiment-indicator"></div>
             </div>
+            
+            <div class="chart-container">
+                <img id="priceChart" src="" alt="Price Chart">
+            </div>
+            
+            <div class="ai-search-summary">
+                <h3>Analysis</h3>
+                <div id="analysisText"></div>
+            </div>
+        </div>
             
             <div class="powered-by">
                 Search Powered by <a href="https://koyn.ai" target="_blank">Koyn.ai</a>
             </div>
+            
+            <!-- <div class="openbb-badge">
+                Now compatible with 
+                <a href="https://openbb.co/" target="_blank">
+                    <img src="/logo.jpg" alt="OpenBB Logo" style="height: 20px; width: auto;">
+                    OpenBB Workspace
+                </a>
+            </div>
+            
+            <p class="openbb-info">
+                Add our custom copilot to OpenBB Workspace by using this URL: 
+                <code>https://koynlabs.com/copilots.json</code>
+            </p> -->
         </div>
     </div>
 
@@ -321,12 +337,12 @@
                     tooltip.className = 'news-tooltip';
                     
                     tooltip.innerHTML = `
-                        <strong class="tooltip-title">${matchingNews.title}</strong>
-                        <p class="tooltip-description">${matchingNews.description || 'No description available.'}</p>
-                        <small class="tooltip-source">Source: ${matchingNews.source}</small>
+                        <strong style="color: var(--koyn-primary-light);">${matchingNews.title}</strong>
+                        <p style="margin: 8px 0; color: var(--koyn-text-secondary);">${matchingNews.description || 'No description available.'}</p>
+                        <small style="color: var(--koyn-text-secondary);">Source: ${matchingNews.source}</small>
                         <div class="tooltip-footer">
                             <a href="${matchingNews.url}" target="_blank" class="read-more">Read Full Article</a>
-        </div>
+                        </div>
                     `;
                     
                     span.appendChild(tooltip);
@@ -373,8 +389,8 @@
                     tooltip.className = 'news-tooltip';
                     
                     tooltip.innerHTML = `
-                        <strong class="tooltip-title">${source}</strong>
-                        <p class="tooltip-description">Source information not available.</p>
+                        <strong style="color: var(--koyn-primary-light);">${source}</strong>
+                        <p style="margin: 8px 0; color: var(--koyn-text-secondary);">Source information not available.</p>
                     `;
                     
                     span.appendChild(tooltip);
@@ -394,126 +410,79 @@
     </script>
 
     <style>
-    /* Enhanced styling for the results container */
+    /* Override styles for results container to match Koynlabs theme */
     #resultsContainer {
         background-color: var(--koyn-bg-panel);
         color: var(--koyn-text);
         border-radius: var(--radius-lg);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-        margin-top: var(--space-xl);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         margin-bottom: var(--space-xl);
         width: 100%;
         max-width: 800px;
-        overflow: hidden;
+        margin-left: auto;
+        margin-right: auto;
     }
     
-    /* Header styling */
-    .ai-search-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: var(--space-lg);
-        border-bottom: 1px solid var(--koyn-border);
-        background-color: var(--koyn-bg-card);
+    /* Fixed search container styling */
+    #searchContainer {
+        position: relative;
+        z-index: 10;
+        margin-top: 0;
+        padding-top: var(--space-lg);
     }
     
-    .asset-info {
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .ai-search-header h2 {
-        margin: 0;
-        font-size: 1.75rem;
-        font-weight: 700;
+    #resultsContainer h2, 
+    #resultsContainer h3,
+    #resultsContainer h4 {
         color: var(--koyn-text);
-        margin-bottom: var(--space-xs);
     }
     
     .asset-price {
         color: var(--koyn-text-secondary);
-        font-size: 1rem;
     }
     
-    .sentiment-indicator {
-        padding: var(--space-xs) var(--space-md);
-        border-radius: var(--radius-md);
-        font-weight: 600;
-        font-size: 0.875rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    /* Chart container styling */
     .chart-container {
-        padding: var(--space-lg);
-        background-color: var(--koyn-bg-panel);
-        text-align: center;
+        background-color: var(--koyn-bg-card);
+        padding: var(--space-md);
+        border-radius: var(--radius-md);
+        margin: var(--space-lg) 0;
     }
     
     .chart-container img {
         max-width: 100%;
-        border-radius: var(--radius-md);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        border-radius: var(--radius-sm);
     }
     
-    /* Analysis section styling */
-    .ai-search-summary {
-        padding: var(--space-lg);
-    }
-    
-    .ai-search-summary h3 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-top: 0;
-        margin-bottom: var(--space-md);
-        color: var(--koyn-text);
-        border-bottom: 1px solid var(--koyn-border);
-        padding-bottom: var(--space-xs);
-    }
-    
-    .analysis-content {
-        line-height: 1.7;
-        font-size: 1.05rem;
-    }
-    
-    .analysis-content p {
-        margin-bottom: var(--space-md);
-    }
-    
-    /* News source styling */
+    /* News source tooltip styling */
     .news-source {
         color: var(--koyn-primary-light);
         font-weight: 500;
         position: relative;
         cursor: pointer;
-        text-decoration: none;
+        text-decoration: underline;
         display: inline-block;
         margin: 0 2px;
-        padding: 0 4px;
+        padding: 0 2px;
         border-radius: 3px;
         background-color: rgba(99, 102, 241, 0.1);
-        transition: all 0.2s ease;
     }
     
     .news-source:hover {
         background-color: rgba(99, 102, 241, 0.2);
-        color: var(--koyn-primary);
     }
     
-    /* Tooltip styling */
     .news-tooltip {
         z-index: 1000;
-        width: 320px;
+        width: 300px;
         padding: var(--space-md);
         border-radius: var(--radius-md);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         position: absolute;
         display: none;
         bottom: 100%;
         left: 50%;
         transform: translateX(-50%);
-        margin-bottom: 12px;
+        margin-bottom: 10px;
         background-color: var(--koyn-bg-panel);
         color: var(--koyn-text);
         border: 1px solid var(--koyn-border);
@@ -525,8 +494,8 @@
         position: absolute;
         top: 100%;
         left: 50%;
-        margin-left: -8px;
-        border-width: 8px;
+        margin-left: -5px;
+        border-width: 5px;
         border-style: solid;
         border-color: var(--koyn-bg-panel) transparent transparent transparent;
     }
@@ -535,7 +504,7 @@
         bottom: auto;
         top: 100%;
         margin-bottom: 0;
-        margin-top: 12px;
+        margin-top: 10px;
     }
     
     .news-tooltip.bottom:after {
@@ -550,7 +519,7 @@
     }
     
     .news-tooltip.left:after {
-        left: 16px;
+        left: 10px;
         margin-left: 0;
     }
     
@@ -562,60 +531,32 @@
     
     .news-tooltip.right:after {
         left: auto;
-        right: 16px;
+        right: 10px;
         margin-left: 0;
     }
     
-    .tooltip-title {
-        display: block;
-        font-size: 1rem;
-        margin-bottom: var(--space-sm);
-        color: var(--koyn-primary-light);
-        line-height: 1.4;
-    }
-    
-    .tooltip-description {
-        font-size: 0.9rem;
-        margin: var(--space-sm) 0;
+    /* Loading indicator */
+    .loading-indicator {
         color: var(--koyn-text-secondary);
-        line-height: 1.5;
     }
     
-    .tooltip-source {
-        display: block;
-        font-size: 0.8rem;
-        color: var(--koyn-text-secondary);
-        margin-top: var(--space-sm);
+    .loading-spinner {
+        border: 2px solid rgba(99, 102, 241, 0.2);
+        border-top-color: var(--koyn-primary);
     }
     
-    .tooltip-footer {
-        margin-top: var(--space-md);
-        padding-top: var(--space-xs);
-        border-top: 1px solid var(--koyn-border);
-        text-align: right;
+    /* Container layout adjustments */
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
     
-    .read-more {
-        color: var(--koyn-primary-light);
-        font-size: 0.875rem;
-        text-decoration: none;
-        font-weight: 500;
-        transition: color 0.2s ease;
-    }
-    
-    .read-more:hover {
-        color: var(--koyn-primary);
-        text-decoration: underline;
-    }
-    
-    /* Sources section styling */
+    /* Add styles for the sources section */
     .sources-section {
         margin-top: var(--space-xl);
         padding-top: var(--space-md);
         border-top: 1px solid var(--koyn-border);
-        background-color: var(--koyn-bg-card);
-        padding: var(--space-md) var(--space-lg);
-        border-radius: var(--radius-md);
     }
     
     .sources-section h4 {
@@ -626,18 +567,13 @@
     }
     
     .sources-list {
-        padding-left: var(--space-xl);
+        padding-left: var(--space-lg);
         margin-top: 0;
-        margin-bottom: 0;
     }
     
     .sources-list li {
         margin-bottom: var(--space-sm);
         line-height: 1.4;
-    }
-    
-    .sources-list li:last-child {
-        margin-bottom: 0;
     }
     
     .sources-list a {
@@ -652,68 +588,32 @@
         text-decoration: underline;
     }
     
-    /* Loading indicator */
-    .loading-indicator {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: absolute;
-        right: 60px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--koyn-text-secondary);
-        font-size: 0.9rem;
+    /* Enhance tooltip styling */
+    .tooltip-footer {
+        margin-top: var(--space-sm);
+        padding-top: var(--space-xs);
+        border-top: 1px solid var(--koyn-border);
+        text-align: right;
     }
     
-    .loading-spinner {
-        width: 20px;
-        height: 20px;
-        border: 2px solid rgba(99, 102, 241, 0.2);
-        border-top-color: var(--koyn-primary);
-        border-radius: 50%;
-        margin-right: var(--space-sm);
-        animation: spin 1s linear infinite;
+    .read-more {
+        color: var(--koyn-primary-light);
+        font-size: 0.875rem;
+        text-decoration: none;
     }
     
-    @keyframes spin {
-        to { transform: rotate(360deg); }
+    .read-more:hover {
+        text-decoration: underline;
     }
     
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .ai-search-header {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        
-        .sentiment-indicator {
-            margin-top: var(--space-sm);
-            align-self: flex-start;
-        }
-        
-        .news-tooltip {
-            width: 280px;
-        }
+    /* Improve paragraph styling in analysis */
+    #analysisText p {
+        margin-bottom: var(--space-md);
+        line-height: 1.6;
     }
     
-    @media (max-width: 480px) {
-        .ai-search-header h2 {
-            font-size: 1.5rem;
-        }
-        
-        .ai-search-summary h3 {
-            font-size: 1.25rem;
-        }
-        
-        .analysis-content {
-            font-size: 1rem;
-        }
-        
-        .news-tooltip {
-            width: 250px;
-            left: 0;
-            transform: none;
-        }
+    #analysisText p:last-of-type {
+        margin-bottom: 0;
     }
     </style>
 </body>
