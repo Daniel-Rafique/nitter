@@ -48,42 +48,6 @@
     <div class="container">
         <!-- Results container moved to the top -->
         <div id="resultsContainer" class="ai-search-results">
-            <div class="ai-search-header">
-                <h2 id="assetName">Bitcoin (BTC)</h2>
-                <div class="asset-price">
-                    <div class="price-display">$81,994.00</div>
-                    <div class="price-change">+$8,896.23 (+12.17%) <span class="time-period">Past year</span></div>
-                </div>
-            </div>
-            
-            <div class="chart-container">
-                <div class="chart-tabs">
-                    <button class="chart-tab">1D</button>
-                    <button class="chart-tab">5D</button>
-                    <button class="chart-tab">1M</button>
-                    <button class="chart-tab">6M</button>
-                    <button class="chart-tab">YTD</button>
-                    <button class="chart-tab active">1Y</button>
-                    <button class="chart-tab">5Y</button>
-                    <button class="chart-tab">MAX</button>
-                </div>
-                <div class="price-chart">
-                    <!-- Chart will be populated here or via direct image -->
-                </div>
-                <div class="chart-info">
-                    <p>As of March 12, 2025, Bitcoin is trading at approximately $81,994. Recently, its price has fluctuated between $78,000 and $83,500, reflecting significant volatility. <span class="source-tag">BARRONS.COM</span></p>
-                    <p>Analysts have varying perspectives on Bitcoin's future trajectory. Some anticipate a potential decline to around $73,000, citing current market conditions reminiscent of past crypto market downturns. <span class="source-tag">INVESTORS.COM</span> Conversely, others predict that Bitcoin could reach $150,000 or higher in 2025, driven by increased institutional adoption and favorable regulatory developments. <span class="source-tag">MARKETWATCH.COM</span></p>
-                    <p>Given Bitcoin's inherent volatility and the diverse range of forecasts, it's crucial to conduct thorough research and assess your risk tolerance before making any investment decisions.</p>
-                    <div class="sources-section">
-                        <div class="sources-label">Sources</div>
-                        <div class="sources-icons">
-                            <span class="source-icon">B</span>
-                            <span class="source-icon">Ɓ</span>
-                            <span class="source-icon chart-icon">📈</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Fixed search container at the bottom -->
@@ -165,35 +129,38 @@
             
             const result = data.results[0];
             
-            // Update asset name and price
-            document.getElementById('assetName').textContent = `${result.asset.charAt(0).toUpperCase() + result.asset.slice(1)} (${result.asset.toUpperCase()})`;
-            document.querySelector('.price-display').textContent = `$${Number(result.asset_price).toLocaleString()}`;
-            
-            // Update chart container
-            const chartContainer = document.querySelector('.chart-container');
-            chartContainer.innerHTML = `
-                <div class="chart-tabs">
-                    <button class="chart-tab">1D</button>
-                    <button class="chart-tab">5D</button>
-                    <button class="chart-tab">1M</button>
-                    <button class="chart-tab">6M</button>
-                    <button class="chart-tab">YTD</button>
-                    <button class="chart-tab active">1Y</button>
-                    <button class="chart-tab">5Y</button>
-                    <button class="chart-tab">MAX</button>
+            // Create the initial results container structure
+            resultsContainer.innerHTML = `
+                <div class="ai-search-header">
+                    <h2 id="assetName">${result.asset.charAt(0).toUpperCase() + result.asset.slice(1)} (${result.asset.toUpperCase()})</h2>
+                    <div class="asset-price">
+                        <div class="price-display">$${Number(result.asset_price).toLocaleString()}</div>
+                    </div>
                 </div>
-                <div class="price-chart">
-                    <img src="${result.price_chart}" alt="Price Chart" class="chart-image">
-                </div>
-                <div class="chart-info">
-                    ${formatAnalysisContent(result.analysis, data.news)}
+                <div class="chart-container">
+                    <div class="chart-tabs">
+                        <button class="chart-tab">1D</button>
+                        <button class="chart-tab">5D</button>
+                        <button class="chart-tab">1M</button>
+                        <button class="chart-tab">6M</button>
+                        <button class="chart-tab">YTD</button>
+                        <button class="chart-tab active">1Y</button>
+                        <button class="chart-tab">5Y</button>
+                        <button class="chart-tab">MAX</button>
+                    </div>
+                    <div class="price-chart">
+                        <img src="${result.price_chart}" alt="Price Chart" class="chart-image">
+                    </div>
+                    <div class="chart-info">
+                        ${formatAnalysisContent(result.analysis, data.news)}
+                    </div>
                 </div>
             `;
             
             // Show the results container
             resultsContainer.style.display = 'block';
             
-            // Set up tooltips
+            // Set up tooltips after content is added
             setupTooltips();
             
             // Scroll to results at the top
@@ -233,31 +200,7 @@
                 return `<p>${formattedParagraph.trim()}</p>`;
             }).filter(p => p).join('');
             
-            // Add sources section with icons
-            const sourcesSection = `
-                <div class="sources-section">
-                    <div class="sources-label">Sources</div>
-                    <div class="sources-icons">
-                        ${news.slice(0, 3).map(item => {
-                            let icon = '📈';
-                            if (item.source.toLowerCase().includes('barron')) {
-                                icon = 'B';
-                            } else if (item.source.toLowerCase().includes('bloomberg')) {
-                                icon = 'Ɓ';
-                            }
-                            return `
-                                <span class="source-icon" 
-                                    data-title="${escapeHtml(item.title)}"
-                                    data-description="${escapeHtml(item.description || '')}"
-                                    data-source="${escapeHtml(item.source)}"
-                                    data-url="${escapeHtml(item.url)}">${icon}</span>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-            `;
-            
-            return formattedParagraphs + sourcesSection;
+            return formattedParagraphs;
         }
         
         // Helper function to escape HTML special characters
@@ -271,9 +214,16 @@
         }
         
         function setupTooltips() {
-            const sourceElements = document.querySelectorAll('.source-tag, .source-icon');
+            const sourceElements = document.querySelectorAll('.source-tag');
             
             sourceElements.forEach(element => {
+                // Remove any existing tooltips
+                const existingTooltip = element.querySelector('.news-tooltip');
+                if (existingTooltip) {
+                    element.removeChild(existingTooltip);
+                }
+
+                // Create new tooltip
                 const tooltip = document.createElement('div');
                 tooltip.className = 'news-tooltip';
                 
@@ -292,10 +242,14 @@
                 element.addEventListener('mouseenter', () => {
                     const rect = element.getBoundingClientRect();
                     const tooltipHeight = tooltip.offsetHeight;
+                    const windowHeight = window.innerHeight;
                     
+                    // Position tooltip above or below based on available space
                     if (rect.top < tooltipHeight + 20) {
                         tooltip.classList.add('bottom');
+                        tooltip.classList.remove('top');
                     } else {
+                        tooltip.classList.add('top');
                         tooltip.classList.remove('bottom');
                     }
                     
@@ -305,11 +259,6 @@
                 // Hide tooltip when mouse leaves
                 element.addEventListener('mouseleave', () => {
                     tooltip.style.display = 'none';
-                });
-                
-                // Open article on click
-                element.addEventListener('click', () => {
-                    window.open(element.dataset.url, '_blank');
                 });
             });
         }
@@ -503,10 +452,8 @@
     .news-tooltip {
         position: absolute;
         z-index: 1000;
-        bottom: 100%;
         left: 50%;
         transform: translateX(-50%);
-        margin-bottom: 8px;
         width: 300px;
         padding: var(--space-md);
         background-color: var(--koyn-bg-panel);
@@ -514,64 +461,23 @@
         border-radius: var(--radius-md);
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         display: none;
+    }
+    
+    .news-tooltip.top {
+        bottom: 100%;
+        margin-bottom: 8px;
     }
     
     .news-tooltip.bottom {
-        bottom: auto;
         top: 100%;
-        margin-bottom: 0;
         margin-top: 8px;
     }
     
-    .news-tooltip strong {
-        display: block;
-        margin-bottom: var(--space-sm);
-        color: var(--koyn-text);
-    }
-    
-    .news-tooltip p {
-        margin-bottom: var(--space-sm);
-        color: var(--koyn-text-secondary);
-        font-size: 0.9rem;
-    }
-    
-    .news-tooltip small {
-        color: var(--koyn-text-secondary);
-        font-size: 0.8rem;
-    }
-    
-    /* Update source tag styling */
-    .source-tag {
-        color: var(--koyn-primary-light);
-        background-color: rgba(70, 167, 88, 0.1);
-        padding: 2px 6px;
-        border-radius: var(--radius-sm);
-        cursor: pointer;
-        position: relative;
-        display: inline-block;
-        margin: 0 2px;
-        transition: all 0.2s ease;
-    }
-    
-    .source-tag:hover {
-        background-color: rgba(70, 167, 88, 0.2);
-    }
-    
-    /* Tooltip styling */
-    .news-tooltip {
-        position: absolute;
-        z-index: 1000;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        margin-bottom: 8px;
-        width: 300px;
-        padding: var(--space-md);
-        background-color: var(--koyn-bg-panel);
-        border: 1px solid var(--koyn-border);
+    .chart-image {
+        width: 100%;
+        height: auto;
         border-radius: var(--radius-md);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        display: none;
+        background-color: var(--koyn-bg-card);
     }
     
     .tooltip-footer {
