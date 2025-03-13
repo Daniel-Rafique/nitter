@@ -51,9 +51,9 @@
             <h1 class="search-heading">Discover Market Insights</h1>
             <p class="search-subheading">Real-time data for Bitcoin, Ethereum, Solana, and DeFi</p>
             
-            <form method="get" action="/api/sentiment" autocomplete="off" class="enhanced-search-form">
-                <input type="hidden" name="f" value="tweets">
-                <input type="text" name="q" autofocus placeholder="Search for insights..." dir="auto">
+            <form method="post" action="https://api.koynlabs.com:3003/api/sentiment" autocomplete="off" class="enhanced-search-form">
+                <input type="text" name="query" autofocus placeholder="Search for insights..." dir="auto">
+                <input type="hidden" name="limit" value="50">
                 <button type="submit" class="search-button"><i class="icon-search"></i></button>
             </form>
             
