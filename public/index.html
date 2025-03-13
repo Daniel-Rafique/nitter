@@ -195,7 +195,7 @@
                     sourcesSection = sourcesMatch[0];
                 }
                 
-                // Process the main content - convert source references
+                // Process the main content - convert source references with proper data attributes
                 mainContent = mainContent.replace(/\b(CoinDesk|CNBC|Bloomberg|Reuters|Financial Times|Wall Street Journal|Barron's|MarketWatch)\b/gi, 
                     (match) => {
                         const newsItem = data.news.find(item => 
@@ -204,19 +204,31 @@
                         );
                         
                         if (newsItem) {
-                            return `<span class="news-source" data-source="${newsItem.source}" data-url="${newsItem.url}" data-title="${escapeHtml(newsItem.title)}" data-description="${escapeHtml(newsItem.description || '')}">${newsItem.source}</span>`;
+                            // Ensure all data attributes are properly escaped and included
+                            return `<span class="news-source" 
+                                data-source="${escapeHtml(newsItem.source)}" 
+                                data-url="${escapeHtml(newsItem.url)}" 
+                                data-title="${escapeHtml(newsItem.title)}" 
+                                data-description="${escapeHtml(newsItem.description || '')}"
+                            >${newsItem.source}</span>`;
                         }
                         return match;
                     }
                 );
                 
-                // Also handle numbered references like [1], [2], etc.
+                // Also handle numbered references like [1], [2], etc. with proper data attributes
                 mainContent = mainContent.replace(/\[(\d+)\]/g, 
                     (match, number) => {
                         const index = parseInt(number) - 1;
                         if (data.news[index]) {
                             const newsItem = data.news[index];
-                            return `<span class="news-source" data-source="${newsItem.source}" data-url="${newsItem.url}" data-title="${escapeHtml(newsItem.title)}" data-description="${escapeHtml(newsItem.description || '')}">${newsItem.source}</span>`;
+                            // Ensure all data attributes are properly escaped and included
+                            return `<span class="news-source" 
+                                data-source="${escapeHtml(newsItem.source)}" 
+                                data-url="${escapeHtml(newsItem.url)}" 
+                                data-title="${escapeHtml(newsItem.title)}" 
+                                data-description="${escapeHtml(newsItem.description || '')}"
+                            >${newsItem.source}</span>`;
                         }
                         return match;
                     }
@@ -261,12 +273,18 @@
                 const tooltip = document.createElement('div');
                 tooltip.className = 'news-tooltip';
                 
+                // Make sure we have all the data we need
+                const title = span.dataset.title || 'Article title not available';
+                const description = span.dataset.description || 'No description available';
+                const source = span.dataset.source || 'Unknown source';
+                const url = span.dataset.url || '#';
+                
                 tooltip.innerHTML = `
-                    <strong style="color: var(--koyn-primary-light);">${span.dataset.title || ''}</strong>
-                    <p style="margin: 8px 0; color: var(--koyn-text-secondary);">${span.dataset.description || ''}</p>
-                    <small style="color: var(--koyn-text-secondary);">Source: ${span.dataset.source || ''}</small>
+                    <strong style="color: var(--koyn-primary-light);">${title}</strong>
+                    <p style="margin: 8px 0; color: var(--koyn-text-secondary);">${description}</p>
+                    <small style="color: var(--koyn-text-secondary);">Source: ${source}</small>
                     <div class="tooltip-footer">
-                        <a href="${span.dataset.url}" target="_blank" class="read-more">Read Full Article</a>
+                        <a href="${url}" target="_blank" class="read-more">Read Full Article</a>
                     </div>
                 `;
                 
@@ -306,10 +324,15 @@
                     tooltip.style.display = 'none';
                 });
                 
-                // Make clickable to open the news article
-                span.style.cursor = 'pointer';
-                span.addEventListener('click', function() {
-                    window.open(this.dataset.url, '_blank');
+                // Fix the click behavior to properly open the article URL
+                span.addEventListener('click', function(e) {
+                    e.preventDefault(); // Prevent default behavior
+                    e.stopPropagation(); // Stop event propagation
+                    
+                    const articleUrl = this.dataset.url;
+                    if (articleUrl && articleUrl !== '#') {
+                        window.open(articleUrl, '_blank');
+                    }
                 });
             });
         }
@@ -402,6 +425,13 @@
         display: inline-block;
         margin: 0 2px;
         z-index: 1;
+        padding: 0 2px;
+        border-radius: 3px;
+        transition: background-color 0.2s ease;
+    }
+    
+    .news-source:hover {
+        background-color: rgba(70, 167, 88, 0.1);
     }
     
     .news-tooltip {
@@ -418,68 +448,10 @@
         color: var(--koyn-text);
         border: 1px solid var(--koyn-border);
         text-align: left;
-        pointer-events: none;
     }
     
-    .news-tooltip.top {
-        bottom: 100%;
-        margin-bottom: 10px;
-    }
-    
-    .news-tooltip.bottom {
-        top: 100%;
-        margin-top: 10px;
-    }
-    
-    .news-tooltip:after {
-        content: '';
-        position: absolute;
-        border-width: 5px;
-        border-style: solid;
-    }
-    
-    .news-tooltip.top:after {
-        top: 100%;
-        left: 50%;
-        margin-left: -5px;
-        border-color: var(--koyn-bg-panel) transparent transparent transparent;
-    }
-    
-    .news-tooltip.bottom:after {
-        bottom: 100%;
-        left: 50%;
-        margin-left: -5px;
-        border-color: transparent transparent var(--koyn-bg-panel) transparent;
-    }
-    
-    .news-tooltip.left {
-        left: 0;
-        transform: none;
-    }
-    
-    .news-tooltip.left:after {
-        left: 10px;
-        margin-left: 0;
-    }
-    
-    .news-tooltip.right {
-        left: auto;
-        right: 0;
-        transform: none;
-    }
-    
-    .news-tooltip.right:after {
-        left: auto;
-        right: 10px;
-        margin-left: 0;
-    }
-    
-    /* Make tooltips work with pointer events */
-    .news-tooltip .tooltip-footer {
-        pointer-events: auto;
-    }
-    
-    .news-tooltip .read-more {
+    /* Make sure the tooltip content is clickable */
+    .news-tooltip * {
         pointer-events: auto;
     }
     
@@ -540,14 +512,21 @@
         text-align: right;
     }
     
+    /* Improve the read more link visibility */
     .read-more {
         color: var(--koyn-primary-light);
         font-size: 0.875rem;
         text-decoration: none;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background-color: rgba(70, 167, 88, 0.1);
+        transition: background-color 0.2s ease;
+        display: inline-block;
     }
     
     .read-more:hover {
-        text-decoration: underline;
+        background-color: rgba(70, 167, 88, 0.2);
+        text-decoration: none;
     }
     
     /* Improve paragraph styling in analysis */
