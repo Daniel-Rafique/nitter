@@ -183,42 +183,70 @@
             if (data.news && data.news.length > 0) {
                 window.latestNewsData = data.news;
                 
-                // Process the analysis text to add news source references if they don't exist
-                data.news.forEach((newsItem, index) => {
-                    const sourceName = newsItem.source;
+                // Check if we need to add a sources section at the bottom
+                if (!analysisContent.toLowerCase().includes('sources:')) {
+                    // Add a sources section at the bottom
+                    analysisContent += '<div class="sources-section"><h4>Sources:</h4><ol class="sources-list">';
                     
-                    // Check if the source is already mentioned in the text
-                    if (!analysisContent.includes(`data-source="${sourceName}"`) && 
-                        !analysisContent.includes(`>${sourceName}<`)) {
-                        
-                        // If not mentioned, we'll add a reference at the end of a relevant sentence
-                        // This is a simple approach - in production you might want more sophisticated text analysis
-                        const sentences = analysisContent.split('. ');
-                        
-                        // Try to find a relevant sentence to attach this news source to
-                        let foundRelevantSentence = false;
-                        for (let i = 0; i < sentences.length; i++) {
-                            // Simple relevance check - see if any words from the news title appear in the sentence
-                            const titleWords = newsItem.title.toLowerCase().split(' ')
-                                .filter(word => word.length > 4); // Only consider significant words
-                            
-                            if (titleWords.some(word => sentences[i].toLowerCase().includes(word))) {
-                                // Add the source reference to this sentence
-                                sentences[i] += ` <span class="news-source" data-source="${sourceName}">[${sourceName}]</span>`;
-                                foundRelevantSentence = true;
-                                break;
-                            }
+                    data.news.forEach((newsItem, index) => {
+                        analysisContent += `<li><a href="${newsItem.url}" target="_blank">${newsItem.source}: ${newsItem.title}</a></li>`;
+                    });
+                    
+                    analysisContent += '</ol></div>';
+                }
+                
+                // Process the analysis text to ensure proper formatting
+                // Split by paragraphs and ensure proper spacing
+                const paragraphs = analysisContent.split(/\n\n|\r\n\r\n/);
+                if (paragraphs.length > 1) {
+                    // If we already have paragraphs, make sure they're properly formatted
+                    analysisContent = paragraphs.map(p => {
+                        // Skip if it's already wrapped in a paragraph tag
+                        if (p.trim().startsWith('<p>') && p.trim().endsWith('</p>')) {
+                            return p;
                         }
-                        
-                        // If no relevant sentence found, add to the last sentence
-                        if (!foundRelevantSentence && sentences.length > 0) {
-                            const lastIndex = sentences.length - 1;
-                            sentences[lastIndex] += ` <span class="news-source" data-source="${sourceName}">[${sourceName}]</span>`;
+                        // Skip the sources section we just added
+                        if (p.includes('<div class="sources-section">')) {
+                            return p;
                         }
+                        return `<p>${p.trim()}</p>`;
+                    }).join('');
+                } else {
+                    // If there's no clear paragraph structure, try to create it
+                    // Split by sentences and group them into paragraphs
+                    const sentences = analysisContent.split(/(?<=[.!?])\s+/);
+                    const newParagraphs = [];
+                    let currentParagraph = [];
+                    
+                    sentences.forEach((sentence, index) => {
+                        currentParagraph.push(sentence);
                         
-                        analysisContent = sentences.join('. ');
+                        // Create a new paragraph every 2-3 sentences or if we detect a topic change
+                        if ((currentParagraph.length >= 2 && index < sentences.length - 1) || 
+                            sentence.includes('However,') || 
+                            sentence.includes('In conclusion,') ||
+                            sentence.includes('To summarize,')) {
+                            newParagraphs.push(currentParagraph.join(' '));
+                            currentParagraph = [];
+                        }
+                    });
+                    
+                    // Add any remaining sentences
+                    if (currentParagraph.length > 0) {
+                        newParagraphs.push(currentParagraph.join(' '));
                     }
-                });
+                    
+                    // Extract the sources section if it exists
+                    const sourcesSection = analysisContent.match(/<div class="sources-section">[\s\S]*?<\/div>/);
+                    
+                    // Format paragraphs
+                    analysisContent = newParagraphs.map(p => `<p>${p.trim()}</p>`).join('');
+                    
+                    // Add back the sources section
+                    if (sourcesSection) {
+                        analysisContent += sourcesSection[0];
+                    }
+                }
             }
             
             // Set the enhanced analysis text with embedded news sources
@@ -255,6 +283,9 @@
                         <strong style="color: var(--koyn-primary-light);">${matchingNews.title}</strong>
                         <p style="margin: 8px 0; color: var(--koyn-text-secondary);">${matchingNews.description || ''}</p>
                         <small style="color: var(--koyn-text-secondary);">Source: ${matchingNews.source}</small>
+                        <div class="tooltip-footer">
+                            <a href="${matchingNews.url}" target="_blank" class="read-more">Read Full Article</a>
+                        </div>
                     `;
                     
                     span.appendChild(tooltip);
@@ -432,6 +463,66 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+    }
+    
+    /* Add styles for the sources section */
+    .sources-section {
+        margin-top: var(--space-xl);
+        padding-top: var(--space-md);
+        border-top: 1px solid var(--koyn-border);
+    }
+    
+    .sources-section h4 {
+        font-size: 1rem;
+        margin-bottom: var(--space-sm);
+        color: var(--koyn-text);
+    }
+    
+    .sources-list {
+        padding-left: var(--space-lg);
+    }
+    
+    .sources-list li {
+        margin-bottom: var(--space-xs);
+    }
+    
+    .sources-list a {
+        color: var(--koyn-primary-light);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+    
+    .sources-list a:hover {
+        color: var(--koyn-primary);
+        text-decoration: underline;
+    }
+    
+    /* Enhance tooltip styling */
+    .tooltip-footer {
+        margin-top: var(--space-sm);
+        padding-top: var(--space-xs);
+        border-top: 1px solid var(--koyn-border);
+        text-align: right;
+    }
+    
+    .read-more {
+        color: var(--koyn-primary-light);
+        font-size: 0.875rem;
+        text-decoration: none;
+    }
+    
+    .read-more:hover {
+        text-decoration: underline;
+    }
+    
+    /* Improve paragraph styling in analysis */
+    #analysisText p {
+        margin-bottom: var(--space-md);
+        line-height: 1.6;
+    }
+    
+    #analysisText p:last-of-type {
+        margin-bottom: 0;
     }
     </style>
 </body>
