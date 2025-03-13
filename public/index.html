@@ -209,6 +209,56 @@
             const paragraphs = mainContent.split(/\n\n|\r\n\r\n/);
             mainContent = paragraphs.map(p => `<p>${p.trim()}</p>`).join('');
             
+            // Process source references in the main content
+            // This is the key part for tooltips - we need to identify news sources and add proper span tags
+            const newsSourceNames = data.news.map(item => item.source);
+            const newsSourceRegex = new RegExp(`\\b(${newsSourceNames.join('|')}|CoinDesk|CNBC|Bloomberg|Reuters|Financial Times|Wall Street Journal|Barron's|MarketWatch|Biztoc\\.com)\\b`, 'gi');
+            
+            mainContent = mainContent.replace(newsSourceRegex, (match) => {
+                // Find the matching news item
+                const newsItem = data.news.find(item => 
+                    item.source.toLowerCase() === match.toLowerCase() ||
+                    match.toLowerCase().includes(item.source.toLowerCase()) ||
+                    item.source.toLowerCase().includes(match.toLowerCase())
+                );
+                
+                if (newsItem) {
+                    return `<span class="news-source" 
+                        data-source="${escapeHtml(newsItem.source)}" 
+                        data-url="${escapeHtml(newsItem.url)}" 
+                        data-title="${escapeHtml(newsItem.title)}" 
+                        data-description="${escapeHtml(newsItem.description || '')}"
+                    >${newsItem.source}</span>`;
+                }
+                
+                // If no matching news item found, still make it a span but without data attributes
+                return `<span class="news-source" data-source="${escapeHtml(match)}">${match}</span>`;
+            });
+            
+            // Also handle any existing news-source spans that might be in the content
+            mainContent = mainContent.replace(/<span class="news-source" data-source="([^"]+)">\[?([^\]<]+)\]?<\/span>/g, 
+                (match, source, text) => {
+                    // Find the matching news item
+                    const newsItem = data.news.find(item => 
+                        item.source.toLowerCase() === source.toLowerCase() ||
+                        source.toLowerCase().includes(item.source.toLowerCase()) ||
+                        item.source.toLowerCase().includes(source.toLowerCase())
+                    );
+                    
+                    if (newsItem) {
+                        return `<span class="news-source" 
+                            data-source="${escapeHtml(newsItem.source)}" 
+                            data-url="${escapeHtml(newsItem.url)}" 
+                            data-title="${escapeHtml(newsItem.title)}" 
+                            data-description="${escapeHtml(newsItem.description || '')}"
+                        >${newsItem.source}</span>`;
+                    }
+                    
+                    // If no matching news item found, keep the original span
+                    return match;
+                }
+            );
+            
             // Process the sources section to convert Markdown links to HTML
             if (sourcesSection) {
                 // Remove markdown bold formatting (**) from the sources heading
@@ -272,33 +322,6 @@
                 
                 sourcesSection += '</ul></div>';
             }
-            
-            // Process source references in the main content
-            mainContent = mainContent.replace(/<span class="news-source" data-source="([^"]+)">\[([^\]]+)\]<\/span>/g, 
-                (match, source) => {
-                    return `<span class="news-source" data-source="${source}">${source}</span>`;
-                }
-            );
-            
-            // Also handle source names directly in the text
-            mainContent = mainContent.replace(/\b(CoinDesk|CNBC|Bloomberg|Reuters|Financial Times|Wall Street Journal|Barron's|MarketWatch|Biztoc\.com)\b/gi, 
-                (match) => {
-                    const newsItem = data.news.find(item => 
-                        item.source.toLowerCase().includes(match.toLowerCase()) ||
-                        match.toLowerCase().includes(item.source.toLowerCase())
-                    );
-                    
-                    if (newsItem) {
-                        return `<span class="news-source" 
-                            data-source="${escapeHtml(newsItem.source)}" 
-                            data-url="${escapeHtml(newsItem.url)}" 
-                            data-title="${escapeHtml(newsItem.title)}" 
-                            data-description="${escapeHtml(newsItem.description || '')}"
-                        >${newsItem.source}</span>`;
-                    }
-                    return match;
-                }
-            );
             
             // Combine the formatted main content with the sources section
             analysisContent = mainContent + sourcesSection;
