@@ -185,6 +185,15 @@
             const analysisText = document.getElementById('analysisText');
             let analysisContent = result.analysis;
             
+            // Fix malformed source tags like "Bloomberg">Bloomberg" before any other processing
+            analysisContent = analysisContent.replace(/([a-zA-Z]+)">([a-zA-Z]+)/g, (match, p1, p2) => {
+                // Only fix if both parts are the same (like Bloomberg">Bloomberg)
+                if (p1.toLowerCase() === p2.toLowerCase()) {
+                    return p1;
+                }
+                return match; // Otherwise leave it alone
+            });
+            
             // First, separate the main content from the sources section
             let mainContent = analysisContent;
             let sourcesSection = '';
