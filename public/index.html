@@ -189,8 +189,8 @@
             let mainContent = analysisContent;
             let sourcesSection = '';
             
-            // Check if there's a Sources section
-            const sourcesMatch = analysisContent.match(/Sources:[\s\S]*$/i);
+            // Check if there's a Sources section (handle both plain and bold markdown)
+            const sourcesMatch = analysisContent.match(/(\*\*)?Sources:(\*\*)?[\s\S]*$/i);
             if (sourcesMatch) {
                 mainContent = analysisContent.substring(0, sourcesMatch.index).trim();
                 sourcesSection = sourcesMatch[0];
@@ -202,6 +202,9 @@
             
             // Process the sources section to convert Markdown links to HTML
             if (sourcesSection) {
+                // Remove markdown bold formatting (**) from the sources heading
+                sourcesSection = sourcesSection.replace(/\*\*Sources:\*\*/, 'Sources:');
+                
                 // Extract the sources list
                 const sourcesList = sourcesSection.replace(/Sources:/, '').trim();
                 
@@ -209,7 +212,8 @@
                 let formattedSourcesSection = '<div class="sources-section"><h4>Sources:</h4><ul class="sources-list">';
                 
                 // Convert Markdown links to HTML links
-                const sourceItems = sourcesList.split(/\s*\d+\.\s*/).filter(item => item.trim());
+                // Handle both numbered lists and plain lists
+                const sourceItems = sourcesList.split(/\s*\d+\.\s*|\n/).filter(item => item.trim());
                 
                 sourceItems.forEach(item => {
                     // Extract link information using regex
@@ -230,8 +234,18 @@
                         } else {
                             formattedSourcesSection += `<li><a href="${sourceUrl}" target="_blank">${sourceName}</a></li>`;
                         }
-                    } else {
-                        formattedSourcesSection += `<li>${item.trim()}</li>`;
+                    } else if (item.trim()) {
+                        // For plain text sources, try to match with news data
+                        const matchingNews = data.news.find(news => 
+                            news.source.toLowerCase().includes(item.trim().toLowerCase()) ||
+                            item.trim().toLowerCase().includes(news.source.toLowerCase())
+                        );
+                        
+                        if (matchingNews) {
+                            formattedSourcesSection += `<li><a href="${matchingNews.url}" target="_blank">${matchingNews.source}</a></li>`;
+                        } else {
+                            formattedSourcesSection += `<li>${item.trim()}</li>`;
+                        }
                     }
                 });
                 
