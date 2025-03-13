@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Analysis Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <script>
+       document.addEventListener("DOMContentLoaded", () => {
+        document.body.addEventListener("mouseenter", async (event) => {
+        if (event.target.classList.contains("news-source")) {
+            const source = event.target.getAttribute("data-source");
+
+            const tooltip = document.createElement("div");
+            tooltip.className = "tooltip";
+            tooltip.style.position = "absolute";
+            tooltip.style.left = `${event.pageX + 10}px`;
+            tooltip.style.top = `${event.pageY + 10}px`;
+            tooltip.style.padding = "10px";
+            tooltip.style.background = "#222";
+            tooltip.style.color = "#fff";
+            tooltip.style.borderRadius = "5px";
+            tooltip.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
+            tooltip.innerText = "Loading news...";
+
+            document.body.appendChild(tooltip);
+
+            // Fetch news dynamically
+            try {
+                const response = await fetch(`/api/news?source=${source}`);
+                const news = await response.json();
+                
+                tooltip.innerHTML = news.map(n => `<a href="${n.url}" target="_blank">${n.title}</a>`).join("<br>");
+            } catch (error) {
+                tooltip.innerText = "Failed to load news.";
+            }
+
+            event.target.addEventListener("mouseleave", () => tooltip.remove(), { once: true });
+        }
+    }, true);
+});
+    </script>   
+</body>
+</html>

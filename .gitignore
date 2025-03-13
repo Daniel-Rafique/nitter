@@ -1,5 +1,4 @@
 nitter
-*.html
 *.db
 /tests/__pycache__
 /tests/geckodriver.log
