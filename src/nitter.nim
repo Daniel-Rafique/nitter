@@ -65,7 +65,8 @@ settings:
 
 routes:
   get "/":
-    resp readFile(cfg.staticDir & "/index.html")
+    # resp renderMain(nil, request, cfg, themePrefs())
+    resp readFile(staticDir & "/index.html")
 
   get "/about":
     resp renderMain(renderAbout(), request, cfg, themePrefs())
