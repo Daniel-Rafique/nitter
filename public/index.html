@@ -46,12 +46,35 @@
     </nav>
 
     <div class="container">
-        <!-- Enhanced search container similar to the one in general.nim -->
-        <div class="enhanced-search-container">
+        <!-- Results container moved to the top -->
+        <div id="resultsContainer" style="display: none;" class="ai-search-results">
+            <div class="ai-search-header">
+                <h2 id="assetName"></h2>
+                <div class="asset-price">Current Price: $<span id="assetPrice"></span></div>
+                <div id="sentimentBadge" class="sentiment-indicator"></div>
+            </div>
+            
+            <div class="chart-container">
+                <img id="priceChart" src="" alt="Price Chart">
+            </div>
+            
+            <div class="ai-search-summary">
+                <h3>Analysis</h3>
+                <div id="analysisText"></div>
+            </div>
+            
+            <div class="news-container">
+                <h3>Related News</h3>
+                <ul id="newsList" class="ai-search-items"></ul>
+            </div>
+        </div>
+
+        <!-- Fixed search container at the bottom -->
+        <div class="enhanced-search-container" id="searchContainer">
             <h1 class="search-heading">Discover Market Insights</h1>
             <p class="search-subheading">Real-time data for Bitcoin, Ethereum, Solana, and DeFi</p>
             
-            <form id="sentimentForm" method="post" action="https://api.koynlabs.com:3003/api/sentiment" autocomplete="off" class="enhanced-search-form">
+            <form id="sentimentForm" method="post" autocomplete="off" class="enhanced-search-form">
                 <input type="text" name="question" autofocus placeholder="Search for insights..." dir="auto">
                 <input type="hidden" name="limit" value="50">
                 <button type="submit" class="search-button"><i class="icon-search"></i></button>
@@ -74,35 +97,13 @@
                 <code>https://koynlabs.com/copilots.json</code>
             </p>
         </div>
-
-        <!-- Add a results container -->
-        <div id="resultsContainer" style="display: none;">
-            <div class="results-header">
-                <h2 id="assetName"></h2>
-                <div class="asset-price">Current Price: $<span id="assetPrice"></span></div>
-                <div class="sentiment-badge" id="sentimentBadge"></div>
-            </div>
-            
-            <div class="chart-container">
-                <img id="priceChart" src="" alt="Price Chart">
-            </div>
-            
-            <div class="analysis-container">
-                <h3>Analysis</h3>
-                <div id="analysisText"></div>
-            </div>
-            
-            <div class="news-container">
-                <h3>Related News</h3>
-                <ul id="newsList"></ul>
-            </div>
-        </div>
     </div>
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         const sentimentForm = document.getElementById('sentimentForm');
         const resultsContainer = document.getElementById('resultsContainer');
+        const searchContainer = document.getElementById('searchContainer');
         
         sentimentForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -155,133 +156,83 @@
                 return;
             }
             
-            // Clear previous results
-            resultsContainer.innerHTML = '';
-            
-            // Check if this is a comparison query
-            const isComparison = data.question.toLowerCase().includes('better') || 
-                                 data.question.toLowerCase().includes('versus') || 
-                                 data.question.toLowerCase().includes('vs');
-            
-            // If it's a comparison and we only have one result, we'll still show it
             const result = data.results[0];
             
-            // Create result container
-            const resultDiv = document.createElement('div');
-            resultDiv.className = 'result-item';
+            // Update asset name and price
+            document.getElementById('assetName').textContent = result.asset.charAt(0).toUpperCase() + result.asset.slice(1);
+            document.getElementById('assetPrice').textContent = result.asset_price;
             
-            // Add header with asset info
-            const header = document.createElement('div');
-            header.className = 'results-header';
-            
-            const assetName = document.createElement('h2');
-            assetName.textContent = result.asset.charAt(0).toUpperCase() + result.asset.slice(1);
-            header.appendChild(assetName);
-            
-            const assetPrice = document.createElement('div');
-            assetPrice.className = 'asset-price';
-            assetPrice.textContent = `Current Price: $${result.asset_price}`;
-            header.appendChild(assetPrice);
-            
-            const sentimentBadge = document.createElement('div');
-            sentimentBadge.className = 'sentiment-badge ' + result.social_sentiment.toLowerCase();
+            // Update sentiment badge with Koynlabs styling
+            const sentimentBadge = document.getElementById('sentimentBadge');
             sentimentBadge.textContent = result.social_sentiment;
-            header.appendChild(sentimentBadge);
             
-            resultDiv.appendChild(header);
+            // Apply appropriate color based on sentiment
+            if (result.social_sentiment.toLowerCase() === 'positive') {
+                sentimentBadge.style.backgroundColor = 'var(--koyn-secondary)';
+            } else if (result.social_sentiment.toLowerCase() === 'negative') {
+                sentimentBadge.style.backgroundColor = '#e74c3c';
+            } else {
+                sentimentBadge.style.backgroundColor = 'var(--koyn-bg-card)';
+            }
             
-            // Add chart
-            const chartContainer = document.createElement('div');
-            chartContainer.className = 'chart-container';
+            // Update price chart
+            document.getElementById('priceChart').src = result.price_chart;
             
-            const chartImg = document.createElement('img');
-            chartImg.src = result.price_chart;
-            chartImg.alt = `${result.asset} Price Chart`;
-            chartContainer.appendChild(chartImg);
+            // Update analysis text with hoverable news sources
+            document.getElementById('analysisText').innerHTML = result.analysis;
             
-            resultDiv.appendChild(chartContainer);
-            
-            // Add analysis
-            const analysisContainer = document.createElement('div');
-            analysisContainer.className = 'analysis-container';
-            
-            const analysisTitle = document.createElement('h3');
-            analysisTitle.textContent = 'Analysis';
-            analysisContainer.appendChild(analysisTitle);
-            
-            const analysisText = document.createElement('div');
-            analysisText.innerHTML = result.analysis;
-            analysisContainer.appendChild(analysisText);
-            
-            resultDiv.appendChild(analysisContainer);
-            
-            // Add news
-            const newsContainer = document.createElement('div');
-            newsContainer.className = 'news-container';
-            
-            const newsTitle = document.createElement('h3');
-            newsTitle.textContent = 'Related News';
-            newsContainer.appendChild(newsTitle);
-            
-            const newsList = document.createElement('ul');
+            // Add news items with Koynlabs styling
+            const newsList = document.getElementById('newsList');
+            newsList.innerHTML = '';
             
             if (data.news && data.news.length > 0) {
                 // Store news data globally for tooltips
                 window.latestNewsData = data.news;
                 
-                data.news.forEach(newsItem => {
+                data.news.forEach((newsItem, index) => {
                     const li = document.createElement('li');
+                    
+                    // Add border color based on index for visual variety
+                    const borderColors = ['var(--koyn-primary)', 'var(--bitcoin-color)', 'var(--ethereum-color)', 'var(--solana-color)', 'var(--koyn-secondary)'];
+                    li.style.borderLeftColor = borderColors[index % borderColors.length];
+                    
                     const a = document.createElement('a');
                     a.href = newsItem.url;
                     a.target = '_blank';
                     a.textContent = newsItem.title;
+                    li.appendChild(a);
                     
                     // Add source and date info
-                    const sourceInfo = document.createElement('span');
-                    sourceInfo.className = 'news-source-info';
-                    sourceInfo.textContent = ` - ${newsItem.source}`;
+                    const sourceInfo = document.createElement('div');
+                    sourceInfo.className = 'item-meta';
                     
+                    let dateStr = '';
                     if (newsItem.publishedAt) {
                         const date = new Date(newsItem.publishedAt);
-                        sourceInfo.textContent += ` (${date.toLocaleDateString()})`;
+                        dateStr = ` • ${date.toLocaleDateString()}`;
                     }
                     
-                    li.appendChild(a);
+                    sourceInfo.textContent = `${newsItem.source}${dateStr}`;
                     li.appendChild(sourceInfo);
                     
-                    // Add tooltip with description if available
+                    // Add description if available
                     if (newsItem.description) {
-                        li.title = newsItem.description;
-                        
-                        // For better tooltip experience
-                        const tooltip = document.createElement('div');
-                        tooltip.className = 'news-tooltip';
-                        tooltip.textContent = newsItem.description;
-                        li.appendChild(tooltip);
-                        
-                        // Show/hide tooltip on hover
-                        li.addEventListener('mouseenter', () => {
-                            tooltip.style.display = 'block';
-                        });
-                        
-                        li.addEventListener('mouseleave', () => {
-                            tooltip.style.display = 'none';
-                        });
+                        const description = document.createElement('p');
+                        description.textContent = newsItem.description.substring(0, 120) + '...';
+                        description.style.fontSize = '0.9em';
+                        description.style.marginTop = '5px';
+                        description.style.color = 'var(--koyn-text-secondary)';
+                        li.appendChild(description);
                     }
                     
                     newsList.appendChild(li);
                 });
             } else {
                 const li = document.createElement('li');
+                li.className = 'no-results';
                 li.textContent = 'No recent news available.';
                 newsList.appendChild(li);
             }
-            
-            newsContainer.appendChild(newsList);
-            resultDiv.appendChild(newsContainer);
-            
-            // Add the result to the container
-            resultsContainer.appendChild(resultDiv);
             
             // Make the news source spans interactive
             setupNewsSourceHovers();
@@ -289,8 +240,8 @@
             // Show the results container
             resultsContainer.style.display = 'block';
             
-            // Scroll to results
-            resultsContainer.scrollIntoView({ behavior: 'smooth' });
+            // Scroll to results at the top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         
         function setupNewsSourceHovers() {
@@ -306,13 +257,17 @@
                 );
                 
                 if (matchingNews) {
-                    // Create tooltip
+                    // Create tooltip with Koynlabs styling
                     const tooltip = document.createElement('div');
                     tooltip.className = 'news-tooltip';
+                    tooltip.style.backgroundColor = 'var(--koyn-bg-panel)';
+                    tooltip.style.color = 'var(--koyn-text)';
+                    tooltip.style.border = '1px solid var(--koyn-border)';
+                    
                     tooltip.innerHTML = `
-                        <strong>${matchingNews.title}</strong>
-                        <p>${matchingNews.description || ''}</p>
-                        <small>Source: ${matchingNews.source}</small>
+                        <strong style="color: var(--koyn-primary-light);">${matchingNews.title}</strong>
+                        <p style="margin: 8px 0; color: var(--koyn-text-secondary);">${matchingNews.description || ''}</p>
+                        <small style="color: var(--koyn-text-secondary);">Source: ${matchingNews.source}</small>
                     `;
                     
                     span.appendChild(tooltip);
@@ -344,5 +299,111 @@
         }
     });
     </script>
+
+    <style>
+    /* Override styles for results container to match Koynlabs theme */
+    #resultsContainer {
+        background-color: var(--koyn-bg-panel);
+        color: var(--koyn-text);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        margin-bottom: var(--space-xl);
+        width: 100%;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    /* Fixed search container styling */
+    #searchContainer {
+        position: relative;
+        z-index: 10;
+        margin-top: 0;
+        padding-top: var(--space-lg);
+    }
+    
+    #resultsContainer h2, 
+    #resultsContainer h3 {
+        color: var(--koyn-text);
+    }
+    
+    .asset-price {
+        color: var(--koyn-text-secondary);
+    }
+    
+    .chart-container {
+        background-color: var(--koyn-bg-card);
+        padding: var(--space-md);
+        border-radius: var(--radius-md);
+        margin: var(--space-lg) 0;
+    }
+    
+    .chart-container img {
+        max-width: 100%;
+        border-radius: var(--radius-sm);
+    }
+    
+    /* News source tooltip styling */
+    .news-source {
+        color: var(--koyn-primary-light);
+        font-weight: 500;
+        position: relative;
+        cursor: pointer;
+        text-decoration: underline;
+    }
+    
+    .news-tooltip {
+        z-index: 1000;
+        width: 300px;
+        padding: var(--space-md);
+        border-radius: var(--radius-md);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .news-tooltip:after {
+        border-color: var(--koyn-bg-panel) transparent transparent transparent;
+    }
+    
+    .news-tooltip.bottom:after {
+        border-color: transparent transparent var(--koyn-bg-panel) transparent;
+    }
+    
+    /* Loading indicator */
+    .loading-indicator {
+        color: var(--koyn-text-secondary);
+    }
+    
+    .loading-spinner {
+        border: 2px solid rgba(99, 102, 241, 0.2);
+        border-top-color: var(--koyn-primary);
+    }
+    
+    /* Make sure analysis text has proper styling */
+    #analysisText {
+        color: var(--koyn-text);
+        line-height: 1.6;
+    }
+    
+    #analysisText p {
+        margin-bottom: var(--space-md);
+    }
+    
+    /* Ensure news items have proper styling */
+    .ai-search-items li {
+        transition: all 0.2s ease;
+    }
+    
+    .ai-search-items li:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Container layout adjustments */
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    </style>
 </body>
 </html>
