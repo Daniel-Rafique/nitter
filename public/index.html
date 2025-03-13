@@ -46,7 +46,20 @@
     </nav>
 
     <div class="container">
-        <!-- Results container moved to the top -->
+
+        <!-- Fixed search container at the bottom -->
+        <div class="enhanced-search-container" id="searchContainer">
+            <h1 class="search-heading">Discover Market Insights</h1>
+            <p class="search-subheading">Real-time data for Bitcoin, Ethereum, Solana, and DeFi</p>
+            
+            <form id="sentimentForm" method="post" autocomplete="off" class="enhanced-search-form">
+                <input type="text" name="question" autofocus placeholder="Search for insights..." dir="auto">
+                <input type="hidden" name="limit" value="50">
+                <button type="submit" class="search-button"><i class="icon-search"></i></button>
+            </form>
+
+
+                    <!-- Results container moved to the top -->
         <div id="resultsContainer" style="display: none;" class="ai-search-results">
             <div class="ai-search-header">
                 <h2 id="assetName"></h2>
@@ -63,17 +76,6 @@
                 <div id="analysisText"></div>
             </div>
         </div>
-
-        <!-- Fixed search container at the bottom -->
-        <div class="enhanced-search-container" id="searchContainer">
-            <h1 class="search-heading">Discover Market Insights</h1>
-            <p class="search-subheading">Real-time data for Bitcoin, Ethereum, Solana, and DeFi</p>
-            
-            <form id="sentimentForm" method="post" autocomplete="off" class="enhanced-search-form">
-                <input type="text" name="question" autofocus placeholder="Search for insights..." dir="auto">
-                <input type="hidden" name="limit" value="50">
-                <button type="submit" class="search-button"><i class="icon-search"></i></button>
-            </form>
             
             <div class="powered-by">
                 Search Powered by <a href="https://koyn.ai" target="_blank">Koyn.ai</a>
