@@ -110,7 +110,15 @@
             // Show loading indicator
             const loadingIndicator = document.createElement('div');
             loadingIndicator.className = 'loading-indicator';
-            loadingIndicator.textContent = 'Analyzing...';
+            
+            const spinner = document.createElement('div');
+            spinner.className = 'loading-spinner';
+            loadingIndicator.appendChild(spinner);
+            
+            const loadingText = document.createElement('span');
+            loadingText.textContent = 'Analyzing...';
+            loadingIndicator.appendChild(loadingText);
+            
             sentimentForm.appendChild(loadingIndicator);
             
             // Get the question
@@ -147,26 +155,75 @@
                 return;
             }
             
+            // Clear previous results
+            resultsContainer.innerHTML = '';
+            
+            // Check if this is a comparison query
+            const isComparison = data.question.toLowerCase().includes('better') || 
+                                 data.question.toLowerCase().includes('versus') || 
+                                 data.question.toLowerCase().includes('vs');
+            
+            // If it's a comparison and we only have one result, we'll still show it
             const result = data.results[0];
             
-            // Update asset name and price
-            document.getElementById('assetName').textContent = result.asset.charAt(0).toUpperCase() + result.asset.slice(1);
-            document.getElementById('assetPrice').textContent = result.asset_price;
+            // Create result container
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'result-item';
             
-            // Update sentiment badge
-            const sentimentBadge = document.getElementById('sentimentBadge');
-            sentimentBadge.textContent = result.social_sentiment;
+            // Add header with asset info
+            const header = document.createElement('div');
+            header.className = 'results-header';
+            
+            const assetName = document.createElement('h2');
+            assetName.textContent = result.asset.charAt(0).toUpperCase() + result.asset.slice(1);
+            header.appendChild(assetName);
+            
+            const assetPrice = document.createElement('div');
+            assetPrice.className = 'asset-price';
+            assetPrice.textContent = `Current Price: $${result.asset_price}`;
+            header.appendChild(assetPrice);
+            
+            const sentimentBadge = document.createElement('div');
             sentimentBadge.className = 'sentiment-badge ' + result.social_sentiment.toLowerCase();
+            sentimentBadge.textContent = result.social_sentiment;
+            header.appendChild(sentimentBadge);
             
-            // Update price chart
-            document.getElementById('priceChart').src = result.price_chart;
+            resultDiv.appendChild(header);
             
-            // Update analysis text with hoverable news sources
-            document.getElementById('analysisText').innerHTML = result.analysis;
+            // Add chart
+            const chartContainer = document.createElement('div');
+            chartContainer.className = 'chart-container';
             
-            // Add news items
-            const newsList = document.getElementById('newsList');
-            newsList.innerHTML = '';
+            const chartImg = document.createElement('img');
+            chartImg.src = result.price_chart;
+            chartImg.alt = `${result.asset} Price Chart`;
+            chartContainer.appendChild(chartImg);
+            
+            resultDiv.appendChild(chartContainer);
+            
+            // Add analysis
+            const analysisContainer = document.createElement('div');
+            analysisContainer.className = 'analysis-container';
+            
+            const analysisTitle = document.createElement('h3');
+            analysisTitle.textContent = 'Analysis';
+            analysisContainer.appendChild(analysisTitle);
+            
+            const analysisText = document.createElement('div');
+            analysisText.innerHTML = result.analysis;
+            analysisContainer.appendChild(analysisText);
+            
+            resultDiv.appendChild(analysisContainer);
+            
+            // Add news
+            const newsContainer = document.createElement('div');
+            newsContainer.className = 'news-container';
+            
+            const newsTitle = document.createElement('h3');
+            newsTitle.textContent = 'Related News';
+            newsContainer.appendChild(newsTitle);
+            
+            const newsList = document.createElement('ul');
             
             if (data.news && data.news.length > 0) {
                 // Store news data globally for tooltips
@@ -220,6 +277,12 @@
                 newsList.appendChild(li);
             }
             
+            newsContainer.appendChild(newsList);
+            resultDiv.appendChild(newsContainer);
+            
+            // Add the result to the container
+            resultsContainer.appendChild(resultDiv);
+            
             // Make the news source spans interactive
             setupNewsSourceHovers();
             
@@ -254,8 +317,16 @@
                     
                     span.appendChild(tooltip);
                     
-                    // Show/hide tooltip on hover
+                    // Show/hide tooltip on hover with intelligent positioning
                     span.addEventListener('mouseenter', () => {
+                        // Check if tooltip would be cut off at the top
+                        const spanRect = span.getBoundingClientRect();
+                        if (spanRect.top < 300) {
+                            tooltip.classList.add('bottom');
+                        } else {
+                            tooltip.classList.remove('bottom');
+                        }
+                        
                         tooltip.style.display = 'block';
                     });
                     
@@ -367,30 +438,58 @@
     .news-tooltip {
         display: none;
         position: absolute;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%);
+        z-index: 100;
         width: 300px;
         padding: 10px;
         background-color: white;
         border-radius: 4px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        z-index: 100;
         font-weight: normal;
         color: #212529;
         text-align: left;
         line-height: 1.5;
+        /* Position the tooltip intelligently */
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        margin-bottom: 10px;
+    }
+
+    /* Add a media query for mobile devices */
+    @media (max-width: 768px) {
+        .news-tooltip {
+            width: 250px;
+            left: 0;
+            transform: none;
+        }
+    }
+
+    /* Add a class for tooltips that would be cut off at the top */
+    .news-tooltip.bottom {
+        bottom: auto;
+        top: 100%;
+        margin-bottom: 0;
+        margin-top: 10px;
     }
 
     .news-tooltip:after {
         content: '';
         position: absolute;
-        top: 100%;
         left: 50%;
         margin-left: -5px;
         border-width: 5px;
         border-style: solid;
+    }
+
+    .news-tooltip:after {
+        top: 100%;
         border-color: white transparent transparent transparent;
+    }
+
+    .news-tooltip.bottom:after {
+        top: auto;
+        bottom: 100%;
+        border-color: transparent transparent white transparent;
     }
 
     /* Loading indicator */
@@ -401,6 +500,23 @@
         transform: translateY(-50%);
         color: #6c757d;
         font-style: italic;
+        display: flex;
+        align-items: center;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        margin-right: 8px;
+        border: 2px solid rgba(0, 123, 255, 0.2);
+        border-radius: 50%;
+        border-top-color: #007bff;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
     }
     </style>
 </body>
