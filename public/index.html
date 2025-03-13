@@ -178,142 +178,72 @@
             // Update price chart
             document.getElementById('priceChart').src = result.price_chart;
             
-            // Update analysis text with hoverable news sources
+            // Process the analysis text
             const analysisText = document.getElementById('analysisText');
-            
-            // First, store the original analysis text
             let analysisContent = result.analysis;
             
-            // Process the analysis content
+            // Process the analysis content if we have news data
             if (data.news && data.news.length > 0) {
-                // Remove square brackets from source tags and convert markdown links to our format
-                analysisContent = analysisContent.replace(/<span class="news-source" data-source="([^"]+)">\[([^\]]+)\]<\/span>/g, 
-                    (match, source) => {
-                        return `<span class="news-source" data-source="${source}">${source}</span>`;
-                    }
-                );
+                // First, extract the main content and sources section
+                let mainContent = analysisContent;
+                let sourcesSection = '';
                 
-                // Convert markdown links in the sources section to our format
-                analysisContent = analysisContent.replace(/\[([^\]]+)\]\(([^)]+)\)/g, 
-                    (match, text, url) => {
+                // Check if there's a Sources section
+                const sourcesMatch = analysisContent.match(/Sources:[\s\S]*$/i);
+                if (sourcesMatch) {
+                    mainContent = analysisContent.substring(0, sourcesMatch.index).trim();
+                    sourcesSection = sourcesMatch[0];
+                }
+                
+                // Process the main content - convert source references
+                mainContent = mainContent.replace(/\b(CoinDesk|CNBC|Bloomberg|Reuters|Financial Times|Wall Street Journal|Barron's|MarketWatch)\b/gi, 
+                    (match) => {
                         const newsItem = data.news.find(item => 
-                            item.source.toLowerCase().includes(text.toLowerCase()) ||
-                            text.toLowerCase().includes(item.source.toLowerCase())
+                            item.source.toLowerCase().includes(match.toLowerCase()) ||
+                            match.toLowerCase().includes(item.source.toLowerCase())
                         );
                         
                         if (newsItem) {
-                            return `<a href="${newsItem.url}" target="_blank">${newsItem.source}</a>`;
+                            return `<span class="news-source" data-source="${newsItem.source}" data-url="${newsItem.url}" data-title="${escapeHtml(newsItem.title)}" data-description="${escapeHtml(newsItem.description || '')}">${newsItem.source}</span>`;
                         }
-                        return `<a href="${url}" target="_blank">${text}</a>`;
+                        return match;
                     }
                 );
                 
-                // Format the sources section
-                if (analysisContent.includes('**Sources:**')) {
-                    analysisContent = analysisContent.replace(/\*\*Sources:\*\*\s*([\s\S]*?)(?=<\/p>|$)/, 
-                        (match, sourcesList) => {
-                            // Extract sources
-                            const sourceItems = sourcesList.trim().split(/\s*\d+\.\s*/).filter(item => item.trim());
-                            
-                            let sourcesHtml = '<div class="sources-section"><h4>Sources:</h4><ul class="sources-list">';
-                            
-                            sourceItems.forEach(item => {
-                                // Clean up the item and extract just the source name
-                                const cleanItem = item.trim().replace(/<a[^>]*>([^<]+)<\/a>/, '$1');
-                                
-                                // Find matching news item
-                                const newsItem = data.news.find(news => 
-                                    news.source.toLowerCase().includes(cleanItem.toLowerCase()) ||
-                                    cleanItem.toLowerCase().includes(news.source.toLowerCase())
-                                );
-                                
-                                if (newsItem) {
-                                    sourcesHtml += `<li><a href="${newsItem.url}" target="_blank">${newsItem.source}</a></li>`;
-                                } else {
-                                    // Use the original link if we can't match
-                                    const linkMatch = item.match(/<a href="([^"]+)"[^>]*>([^<]+)<\/a>/);
-                                    if (linkMatch) {
-                                        sourcesHtml += `<li><a href="${linkMatch[1]}" target="_blank">${linkMatch[2]}</a></li>`;
-                                    } else {
-                                        sourcesHtml += `<li>${item}</li>`;
-                                    }
-                                }
-                            });
-                            
-                            sourcesHtml += '</ul></div>';
-                            return sourcesHtml;
+                // Also handle numbered references like [1], [2], etc.
+                mainContent = mainContent.replace(/\[(\d+)\]/g, 
+                    (match, number) => {
+                        const index = parseInt(number) - 1;
+                        if (data.news[index]) {
+                            const newsItem = data.news[index];
+                            return `<span class="news-source" data-source="${newsItem.source}" data-url="${newsItem.url}" data-title="${escapeHtml(newsItem.title)}" data-description="${escapeHtml(newsItem.description || '')}">${newsItem.source}</span>`;
                         }
-                    );
-                } else {
-                    // If no sources section, add one
-                    analysisContent += '<div class="sources-section"><h4>Sources:</h4><ul class="sources-list">';
-                    
-                    data.news.forEach((newsItem) => {
-                        analysisContent += `<li><a href="${newsItem.url}" target="_blank">${newsItem.source}</a></li>`;
-                    });
-                    
-                    analysisContent += '</ul></div>';
-                }
+                        return match;
+                    }
+                );
                 
-                // Process the analysis text to ensure proper formatting
-                // Split by paragraphs and ensure proper spacing
-                const paragraphs = analysisContent.split(/\n\n|\r\n\r\n/);
-                if (paragraphs.length > 1) {
-                    // If we already have paragraphs, make sure they're properly formatted
-                    analysisContent = paragraphs.map(p => {
-                        // Skip if it's already wrapped in a paragraph tag
-                        if (p.trim().startsWith('<p>') && p.trim().endsWith('</p>')) {
-                            return p;
-                        }
-                        // Skip the sources section we just added
-                        if (p.includes('<div class="sources-section">')) {
-                            return p;
-                        }
-                        return `<p>${p.trim()}</p>`;
-                    }).join('');
-                } else {
-                    // If there's no clear paragraph structure, try to create it
-                    // Split by sentences and group them into paragraphs
-                    const sentences = analysisContent.split(/(?<=[.!?])\s+/);
-                    const newParagraphs = [];
-                    let currentParagraph = [];
-                    
-                    sentences.forEach((sentence, index) => {
-                        currentParagraph.push(sentence);
-                        
-                        // Create a new paragraph every 2-3 sentences or if we detect a topic change
-                        if ((currentParagraph.length >= 2 && index < sentences.length - 1) || 
-                            sentence.includes('However,') || 
-                            sentence.includes('In conclusion,') ||
-                            sentence.includes('To summarize,')) {
-                            newParagraphs.push(currentParagraph.join(' '));
-                            currentParagraph = [];
-                        }
-                    });
-                    
-                    // Add any remaining sentences
-                    if (currentParagraph.length > 0) {
-                        newParagraphs.push(currentParagraph.join(' '));
-                    }
-                    
-                    // Extract the sources section if it exists
-                    const sourcesSection = analysisContent.match(/<div class="sources-section">[\s\S]*?<\/div>/);
-                    
-                    // Format paragraphs
-                    analysisContent = newParagraphs.map(p => `<p>${p.trim()}</p>`).join('');
-                    
-                    // Add back the sources section
-                    if (sourcesSection) {
-                        analysisContent += sourcesSection[0];
-                    }
-                }
+                // Format the main content into paragraphs
+                const paragraphs = mainContent.split(/\n\n|\r\n\r\n/);
+                mainContent = paragraphs.map(p => `<p>${p.trim()}</p>`).join('');
+                
+                // Create a clean sources section
+                let formattedSourcesSection = '<div class="sources-section"><h4>Sources:</h4><ul class="sources-list">';
+                
+                data.news.forEach((newsItem) => {
+                    formattedSourcesSection += `<li><a href="${newsItem.url}" target="_blank">${newsItem.source}</a></li>`;
+                });
+                
+                formattedSourcesSection += '</ul></div>';
+                
+                // Combine the processed main content with the formatted sources section
+                analysisContent = mainContent + formattedSourcesSection;
             }
             
-            // Set the enhanced analysis text with embedded news sources
+            // Set the enhanced analysis text
             analysisText.innerHTML = analysisContent;
             
-            // Make the news source spans in the analysis text interactive
-            setupNewsSourceHovers(data.news);
+            // Set up tooltips for news sources
+            setupNewsSourceHovers();
             
             // Show the results container
             resultsContainer.style.display = 'block';
@@ -322,120 +252,78 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         
-        function setupNewsSourceHovers(newsData) {
+        function setupNewsSourceHovers() {
             // Find all news source spans
             const newsSourceSpans = document.querySelectorAll('.news-source');
             
             newsSourceSpans.forEach(span => {
-                const source = span.getAttribute('data-source');
+                // Create tooltip
+                const tooltip = document.createElement('div');
+                tooltip.className = 'news-tooltip';
                 
-                // Find matching news item
-                const matchingNews = newsData.find(item => 
-                    item.source.toLowerCase().includes(source.toLowerCase()) ||
-                    source.toLowerCase().includes(item.source.toLowerCase())
-                );
+                tooltip.innerHTML = `
+                    <strong style="color: var(--koyn-primary-light);">${span.dataset.title || ''}</strong>
+                    <p style="margin: 8px 0; color: var(--koyn-text-secondary);">${span.dataset.description || ''}</p>
+                    <small style="color: var(--koyn-text-secondary);">Source: ${span.dataset.source || ''}</small>
+                    <div class="tooltip-footer">
+                        <a href="${span.dataset.url}" target="_blank" class="read-more">Read Full Article</a>
+                    </div>
+                `;
                 
-                if (matchingNews) {
-                    // Remove any existing tooltips
-                    const existingTooltip = span.querySelector('.news-tooltip');
-                    if (existingTooltip) {
-                        span.removeChild(existingTooltip);
+                span.appendChild(tooltip);
+                
+                // Show/hide tooltip on hover
+                span.addEventListener('mouseenter', function() {
+                    const rect = this.getBoundingClientRect();
+                    const tooltipHeight = tooltip.offsetHeight || 200;
+                    
+                    // Position tooltip based on available space
+                    if (rect.top < tooltipHeight + 20) {
+                        tooltip.classList.add('bottom');
+                        tooltip.classList.remove('top');
+                    } else {
+                        tooltip.classList.add('top');
+                        tooltip.classList.remove('bottom');
                     }
                     
-                    // Create tooltip with Koynlabs styling
-                    const tooltip = document.createElement('div');
-                    tooltip.className = 'news-tooltip';
+                    // Handle horizontal positioning
+                    const viewportWidth = window.innerWidth;
+                    if (rect.left < 150) {
+                        tooltip.classList.add('left');
+                        tooltip.classList.remove('right');
+                    } else if (viewportWidth - rect.right < 150) {
+                        tooltip.classList.add('right');
+                        tooltip.classList.remove('left');
+                    } else {
+                        tooltip.classList.remove('left');
+                        tooltip.classList.remove('right');
+                    }
                     
-                    tooltip.innerHTML = `
-                        <strong style="color: var(--koyn-primary-light);">${matchingNews.title}</strong>
-                        <p style="margin: 8px 0; color: var(--koyn-text-secondary);">${matchingNews.description || ''}</p>
-                        <small style="color: var(--koyn-text-secondary);">Source: ${matchingNews.source}</small>
-                        <div class="tooltip-footer">
-                            <a href="${matchingNews.url}" target="_blank" class="read-more">Read Full Article</a>
-                        </div>
-                    `;
-                    
-                    span.appendChild(tooltip);
-                    
-                    // Show/hide tooltip on hover with intelligent positioning
-                    span.addEventListener('mouseenter', function() {
-                        // Check position for optimal tooltip placement
-                        const spanRect = span.getBoundingClientRect();
-                        const tooltipHeight = tooltip.offsetHeight || 200; // Estimate if not rendered yet
-                        
-                        // Position based on available space
-                        if (spanRect.top < tooltipHeight + 20) {
-                            tooltip.classList.add('bottom');
-                            tooltip.classList.remove('top');
-                        } else {
-                            tooltip.classList.add('top');
-                            tooltip.classList.remove('bottom');
-                        }
-                        
-                        // Check horizontal position
-                        const viewportWidth = window.innerWidth;
-                        if (spanRect.left < 150) {
-                            tooltip.classList.add('left');
-                            tooltip.classList.remove('right');
-                        } else if (viewportWidth - spanRect.right < 150) {
-                            tooltip.classList.add('right');
-                            tooltip.classList.remove('left');
-                        } else {
-                            tooltip.classList.remove('left');
-                            tooltip.classList.remove('right');
-                        }
-                        
-                        tooltip.style.display = 'block';
-                    });
-                    
-                    span.addEventListener('mouseleave', function() {
-                        tooltip.style.display = 'none';
-                    });
-                    
-                    // Make clickable to open the news article
-                    span.style.cursor = 'pointer';
-                    span.addEventListener('click', function() {
-                        window.open(matchingNews.url, '_blank');
-                    });
-                }
+                    tooltip.style.display = 'block';
+                });
+                
+                span.addEventListener('mouseleave', function() {
+                    tooltip.style.display = 'none';
+                });
+                
+                // Make clickable to open the news article
+                span.style.cursor = 'pointer';
+                span.addEventListener('click', function() {
+                    window.open(this.dataset.url, '_blank');
+                });
             });
-            
-            // Also handle any numbered references in the text [1], [2], etc.
-            const numberRefs = document.querySelectorAll('a[href^="#ref"]');
-            numberRefs.forEach(ref => {
-                const refNumber = ref.textContent.match(/\d+/);
-                if (refNumber && refNumber[0] && newsData[parseInt(refNumber[0]) - 1]) {
-                    const newsItem = newsData[parseInt(refNumber[0]) - 1];
-                    
-                    // Create tooltip
-                    const tooltip = document.createElement('div');
-                    tooltip.className = 'news-tooltip';
-                    
-                    tooltip.innerHTML = `
-                        <strong style="color: var(--koyn-primary-light);">${newsItem.title}</strong>
-                        <p style="margin: 8px 0; color: var(--koyn-text-secondary);">${newsItem.description || ''}</p>
-                        <small style="color: var(--koyn-text-secondary);">Source: ${newsItem.source}</small>
-                        <div class="tooltip-footer">
-                            <a href="${newsItem.url}" target="_blank" class="read-more">Read Full Article</a>
-                        </div>
-                    `;
-                    
-                    ref.appendChild(tooltip);
-                    
-                    // Show/hide tooltip on hover
-                    ref.addEventListener('mouseenter', function() {
-                        tooltip.style.display = 'block';
-                    });
-                    
-                    ref.addEventListener('mouseleave', function() {
-                        tooltip.style.display = 'none';
-                    });
-                    
-                    // Update href to actual news URL
-                    ref.href = newsItem.url;
-                    ref.target = '_blank';
-                }
-            });
+        }
+        
+        // Helper function to escape HTML
+        function escapeHtml(unsafe) {
+            return unsafe
+                ? unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;")
+                : '';
         }
     });
     </script>
