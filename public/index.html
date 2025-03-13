@@ -3,10 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Financial Analysis Chart</title>
+    <title>Koynlabs Market Insights</title>
+    
+    <!-- Include the same CSS files that the Nim template uses -->
+    <link rel="stylesheet" type="text/css" href="/css/style.css?v=19">
+    <link rel="stylesheet" type="text/css" href="/css/fontello.css?v=2">
+    <link rel="stylesheet" type="text/css" href="/css/koynlabs.css?v=1">
+    
+    <!-- Favicon links -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    
+    <!-- External scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+    <!-- Navigation bar similar to the one in general.nim -->
+    <nav>
+        <div class="inner-nav">
+            <div class="nav-item">
+                <a href="/"><img class="site-logo" src="/logo.jpg" alt="Koynlabs Logo"></a>
+                <a class="site-name" href="/">Koynlabs</a>
+            </div>
+            <div class="nav-links">
+                <a href="/search?q=Bitcoin" class="nav-link">Bitcoin</a>
+                <a href="/search?q=Ethereum" class="nav-link">Ethereum</a>
+                <a href="/search?q=Solana" class="nav-link">Solana</a>
+                <a href="/search?q=DeFi" class="nav-link">DeFi</a>
+            </div>
+            <div class="nav-item right">
+                <a href="/search?ai=true" title="AI-Powered Search" class="nav-item">
+                    <div class="icon-search-ai">
+                        <i class="icon-search"></i>
+                        <span class="ai-indicator">AI</span>
+                    </div>
+                </a>
+                <a href="/about" title="About" class="nav-item"><i class="icon-info"></i></a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Enhanced search container similar to the one in general.nim -->
+        <div class="enhanced-search-container">
+            <h1 class="search-heading">Discover Market Insights</h1>
+            <p class="search-subheading">Real-time data for Bitcoin, Ethereum, Solana, and DeFi</p>
+            
+            <form method="get" action="/search" autocomplete="off" class="enhanced-search-form">
+                <input type="hidden" name="f" value="tweets">
+                <input type="text" name="q" autofocus placeholder="Search for insights..." dir="auto">
+                <button type="submit" class="search-button"><i class="icon-search"></i></button>
+            </form>
+            
+            <div class="powered-by">
+                Search Powered by <a href="https://koyn.ai" target="_blank">Koyn.ai</a>
+            </div>
+            
+            <div class="openbb-badge">
+                Now compatible with 
+                <a href="https://openbb.co/" target="_blank">
+                    <img src="/logo.jpg" alt="OpenBB Logo" style="height: 20px; width: auto;">
+                    OpenBB Workspace
+                </a>
+            </div>
+            
+            <p class="openbb-info">
+                Add our custom copilot to OpenBB Workspace by using this URL: 
+                <code>https://koynlabs.com/copilots.json</code>
+            </p>
+        </div>
+    </div>
+
     <script>
        document.addEventListener("DOMContentLoaded", () => {
         document.body.addEventListener("mouseenter", async (event) => {
@@ -41,6 +110,21 @@
         }
     }, true);
 });
+
+    // Add additional JavaScript to interact with your Nitter API
+    async function fetchData() {
+        try {
+            const response = await fetch('/api/data');
+            const data = await response.json();
+            // Process your data here
+            console.log('Data fetched:', data);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    }
+
+    // Call your functions
+    fetchData();
     </script>   
 </body>
 </html>
