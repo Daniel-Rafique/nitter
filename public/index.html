@@ -185,13 +185,6 @@
             const analysisText = document.getElementById('analysisText');
             let analysisContent = result.analysis;
             
-            // Sanitize the analysis content to remove any malformed HTML
-            analysisContent = analysisContent
-                .replace(/([^<])(>)([^>])/g, '$1&gt;$3') // Replace standalone > not part of a tag
-                .replace(/([^<])(<)([^>])/g, '$1&lt;$3') // Replace standalone < not part of a tag
-                .replace(/">/g, '"') // Remove stray "> sequences
-                .replace(/>\s*</g, '>\n<'); // Ensure proper spacing between tags
-            
             // First, separate the main content from the sources section
             let mainContent = analysisContent;
             let sourcesSection = '';
@@ -281,12 +274,9 @@
             // Also handle source names directly in the text
             mainContent = mainContent.replace(/\b(CoinDesk|CNBC|Bloomberg|Reuters|Financial Times|Wall Street Journal|Barron's|MarketWatch|Biztoc\.com)\b/gi, 
                 (match) => {
-                    // First, clean up any malformed HTML that might be in the match
-                    const cleanMatch = match.replace(/[">]/g, '');
-                    
                     const newsItem = data.news.find(item => 
-                        item.source.toLowerCase().includes(cleanMatch.toLowerCase()) ||
-                        cleanMatch.toLowerCase().includes(item.source.toLowerCase())
+                        item.source.toLowerCase().includes(match.toLowerCase()) ||
+                        match.toLowerCase().includes(item.source.toLowerCase())
                     );
                     
                     if (newsItem) {
@@ -297,7 +287,7 @@
                             data-description="${escapeHtml(newsItem.description || '')}"
                         >${newsItem.source}</span>`;
                     }
-                    return cleanMatch; // Return the cleaned match instead of the original
+                    return match;
                 }
             );
             
