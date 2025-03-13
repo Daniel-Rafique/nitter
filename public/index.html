@@ -61,11 +61,12 @@
             <div class="ai-search-summary">
                 <h3>Analysis</h3>
                 <div id="analysisText"></div>
-            </div>
-            
-            <div class="news-container">
-                <h3>Related News</h3>
-                <ul id="newsList" class="ai-search-items"></ul>
+                
+                <!-- News sources legend -->
+                <div id="newsSources" class="news-sources-legend">
+                    <h4>News Sources</h4>
+                    <div id="newsSourcesList" class="news-sources-list"></div>
+                </div>
             </div>
         </div>
 
@@ -181,60 +182,66 @@
             // Update analysis text with hoverable news sources
             document.getElementById('analysisText').innerHTML = result.analysis;
             
-            // Add news items with Koynlabs styling
-            const newsList = document.getElementById('newsList');
-            newsList.innerHTML = '';
-            
+            // Store news data globally for tooltips
             if (data.news && data.news.length > 0) {
-                // Store news data globally for tooltips
                 window.latestNewsData = data.news;
                 
+                // Add news sources as interactive badges
+                const newsSourcesList = document.getElementById('newsSourcesList');
+                newsSourcesList.innerHTML = '';
+                
                 data.news.forEach((newsItem, index) => {
-                    const li = document.createElement('li');
+                    const sourceTag = document.createElement('div');
+                    sourceTag.className = 'news-source-tag';
                     
-                    // Add border color based on index for visual variety
-                    const borderColors = ['var(--koyn-primary)', 'var(--bitcoin-color)', 'var(--ethereum-color)', 'var(--solana-color)', 'var(--koyn-secondary)'];
-                    li.style.borderLeftColor = borderColors[index % borderColors.length];
+                    // Add color based on index for visual variety
+                    const colors = ['var(--koyn-primary)', 'var(--bitcoin-color)', 'var(--ethereum-color)', 'var(--solana-color)', 'var(--koyn-secondary)'];
+                    sourceTag.style.borderColor = colors[index % colors.length];
                     
-                    const a = document.createElement('a');
-                    a.href = newsItem.url;
-                    a.target = '_blank';
-                    a.textContent = newsItem.title;
-                    li.appendChild(a);
+                    sourceTag.textContent = newsItem.source;
+                    sourceTag.setAttribute('data-source', newsItem.source);
                     
-                    // Add source and date info
-                    const sourceInfo = document.createElement('div');
-                    sourceInfo.className = 'item-meta';
+                    // Create tooltip
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'news-tooltip';
+                    tooltip.style.backgroundColor = 'var(--koyn-bg-panel)';
+                    tooltip.style.color = 'var(--koyn-text)';
+                    tooltip.style.border = '1px solid var(--koyn-border)';
                     
-                    let dateStr = '';
-                    if (newsItem.publishedAt) {
-                        const date = new Date(newsItem.publishedAt);
-                        dateStr = ` • ${date.toLocaleDateString()}`;
-                    }
+                    tooltip.innerHTML = `
+                        <strong style="color: var(--koyn-primary-light);">${newsItem.title}</strong>
+                        <p style="margin: 8px 0; color: var(--koyn-text-secondary);">${newsItem.description || ''}</p>
+                        <small style="color: var(--koyn-text-secondary);">Source: ${newsItem.source}</small>
+                    `;
                     
-                    sourceInfo.textContent = `${newsItem.source}${dateStr}`;
-                    li.appendChild(sourceInfo);
+                    sourceTag.appendChild(tooltip);
                     
-                    // Add description if available
-                    if (newsItem.description) {
-                        const description = document.createElement('p');
-                        description.textContent = newsItem.description.substring(0, 120) + '...';
-                        description.style.fontSize = '0.9em';
-                        description.style.marginTop = '5px';
-                        description.style.color = 'var(--koyn-text-secondary)';
-                        li.appendChild(description);
-                    }
+                    // Show/hide tooltip on hover
+                    sourceTag.addEventListener('mouseenter', () => {
+                        tooltip.style.display = 'block';
+                    });
                     
-                    newsList.appendChild(li);
+                    sourceTag.addEventListener('mouseleave', () => {
+                        tooltip.style.display = 'none';
+                    });
+                    
+                    // Make clickable to open the news article
+                    sourceTag.style.cursor = 'pointer';
+                    sourceTag.addEventListener('click', () => {
+                        window.open(newsItem.url, '_blank');
+                    });
+                    
+                    newsSourcesList.appendChild(sourceTag);
                 });
+                
+                // Show the news sources section
+                document.getElementById('newsSources').style.display = 'block';
             } else {
-                const li = document.createElement('li');
-                li.className = 'no-results';
-                li.textContent = 'No recent news available.';
-                newsList.appendChild(li);
+                // Hide the news sources section if no news
+                document.getElementById('newsSources').style.display = 'none';
             }
             
-            // Make the news source spans interactive
+            // Make the news source spans in the analysis text interactive
             setupNewsSourceHovers();
             
             // Show the results container
@@ -323,7 +330,8 @@
     }
     
     #resultsContainer h2, 
-    #resultsContainer h3 {
+    #resultsContainer h3,
+    #resultsContainer h4 {
         color: var(--koyn-text);
     }
     
@@ -358,14 +366,70 @@
         padding: var(--space-md);
         border-radius: var(--radius-md);
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        position: absolute;
+        display: none;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        margin-bottom: 10px;
     }
     
     .news-tooltip:after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
         border-color: var(--koyn-bg-panel) transparent transparent transparent;
     }
     
+    .news-tooltip.bottom {
+        bottom: auto;
+        top: 100%;
+        margin-bottom: 0;
+        margin-top: 10px;
+    }
+    
     .news-tooltip.bottom:after {
+        top: auto;
+        bottom: 100%;
         border-color: transparent transparent var(--koyn-bg-panel) transparent;
+    }
+    
+    /* News sources legend */
+    .news-sources-legend {
+        margin-top: var(--space-xl);
+        padding-top: var(--space-md);
+        border-top: 1px solid var(--koyn-border);
+    }
+    
+    .news-sources-legend h4 {
+        font-size: 1rem;
+        margin-bottom: var(--space-sm);
+    }
+    
+    .news-sources-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+        margin-top: var(--space-sm);
+    }
+    
+    .news-source-tag {
+        position: relative;
+        padding: var(--space-xs) var(--space-sm);
+        background-color: var(--koyn-bg-card);
+        border-radius: var(--radius-md);
+        border-left: 3px solid;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+    }
+    
+    .news-source-tag:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     }
     
     /* Loading indicator */
@@ -388,21 +452,20 @@
         margin-bottom: var(--space-md);
     }
     
-    /* Ensure news items have proper styling */
-    .ai-search-items li {
-        transition: all 0.2s ease;
-    }
-    
-    .ai-search-items li:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    
     /* Container layout adjustments */
     .container {
         display: flex;
         flex-direction: column;
         align-items: center;
+    }
+    
+    /* Media queries for responsive tooltips */
+    @media (max-width: 768px) {
+        .news-tooltip {
+            width: 250px;
+            left: 0;
+            transform: none;
+        }
     }
     </style>
 </body>
