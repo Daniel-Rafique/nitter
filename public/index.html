@@ -61,12 +61,6 @@
             <div class="ai-search-summary">
                 <h3>Analysis</h3>
                 <div id="analysisText"></div>
-                
-                <!-- News sources legend -->
-                <div id="newsSources" class="news-sources-legend">
-                    <h4>News Sources</h4>
-                    <div id="newsSourcesList" class="news-sources-list"></div>
-                </div>
             </div>
         </div>
 
@@ -180,66 +174,55 @@
             document.getElementById('priceChart').src = result.price_chart;
             
             // Update analysis text with hoverable news sources
-            document.getElementById('analysisText').innerHTML = result.analysis;
+            const analysisText = document.getElementById('analysisText');
+            
+            // First, store the original analysis text
+            let analysisContent = result.analysis;
             
             // Store news data globally for tooltips
             if (data.news && data.news.length > 0) {
                 window.latestNewsData = data.news;
                 
-                // Add news sources as interactive badges
-                const newsSourcesList = document.getElementById('newsSourcesList');
-                newsSourcesList.innerHTML = '';
-                
+                // Process the analysis text to add news source references if they don't exist
                 data.news.forEach((newsItem, index) => {
-                    const sourceTag = document.createElement('div');
-                    sourceTag.className = 'news-source-tag';
+                    const sourceName = newsItem.source;
                     
-                    // Add color based on index for visual variety
-                    const colors = ['var(--koyn-primary)', 'var(--bitcoin-color)', 'var(--ethereum-color)', 'var(--solana-color)', 'var(--koyn-secondary)'];
-                    sourceTag.style.borderColor = colors[index % colors.length];
-                    
-                    sourceTag.textContent = newsItem.source;
-                    sourceTag.setAttribute('data-source', newsItem.source);
-                    
-                    // Create tooltip
-                    const tooltip = document.createElement('div');
-                    tooltip.className = 'news-tooltip';
-                    tooltip.style.backgroundColor = 'var(--koyn-bg-panel)';
-                    tooltip.style.color = 'var(--koyn-text)';
-                    tooltip.style.border = '1px solid var(--koyn-border)';
-                    
-                    tooltip.innerHTML = `
-                        <strong style="color: var(--koyn-primary-light);">${newsItem.title}</strong>
-                        <p style="margin: 8px 0; color: var(--koyn-text-secondary);">${newsItem.description || ''}</p>
-                        <small style="color: var(--koyn-text-secondary);">Source: ${newsItem.source}</small>
-                    `;
-                    
-                    sourceTag.appendChild(tooltip);
-                    
-                    // Show/hide tooltip on hover
-                    sourceTag.addEventListener('mouseenter', () => {
-                        tooltip.style.display = 'block';
-                    });
-                    
-                    sourceTag.addEventListener('mouseleave', () => {
-                        tooltip.style.display = 'none';
-                    });
-                    
-                    // Make clickable to open the news article
-                    sourceTag.style.cursor = 'pointer';
-                    sourceTag.addEventListener('click', () => {
-                        window.open(newsItem.url, '_blank');
-                    });
-                    
-                    newsSourcesList.appendChild(sourceTag);
+                    // Check if the source is already mentioned in the text
+                    if (!analysisContent.includes(`data-source="${sourceName}"`) && 
+                        !analysisContent.includes(`>${sourceName}<`)) {
+                        
+                        // If not mentioned, we'll add a reference at the end of a relevant sentence
+                        // This is a simple approach - in production you might want more sophisticated text analysis
+                        const sentences = analysisContent.split('. ');
+                        
+                        // Try to find a relevant sentence to attach this news source to
+                        let foundRelevantSentence = false;
+                        for (let i = 0; i < sentences.length; i++) {
+                            // Simple relevance check - see if any words from the news title appear in the sentence
+                            const titleWords = newsItem.title.toLowerCase().split(' ')
+                                .filter(word => word.length > 4); // Only consider significant words
+                            
+                            if (titleWords.some(word => sentences[i].toLowerCase().includes(word))) {
+                                // Add the source reference to this sentence
+                                sentences[i] += ` <span class="news-source" data-source="${sourceName}">[${sourceName}]</span>`;
+                                foundRelevantSentence = true;
+                                break;
+                            }
+                        }
+                        
+                        // If no relevant sentence found, add to the last sentence
+                        if (!foundRelevantSentence && sentences.length > 0) {
+                            const lastIndex = sentences.length - 1;
+                            sentences[lastIndex] += ` <span class="news-source" data-source="${sourceName}">[${sourceName}]</span>`;
+                        }
+                        
+                        analysisContent = sentences.join('. ');
+                    }
                 });
-                
-                // Show the news sources section
-                document.getElementById('newsSources').style.display = 'block';
-            } else {
-                // Hide the news sources section if no news
-                document.getElementById('newsSources').style.display = 'none';
             }
+            
+            // Set the enhanced analysis text with embedded news sources
+            analysisText.innerHTML = analysisContent;
             
             // Make the news source spans in the analysis text interactive
             setupNewsSourceHovers();
@@ -267,9 +250,6 @@
                     // Create tooltip with Koynlabs styling
                     const tooltip = document.createElement('div');
                     tooltip.className = 'news-tooltip';
-                    tooltip.style.backgroundColor = 'var(--koyn-bg-panel)';
-                    tooltip.style.color = 'var(--koyn-text)';
-                    tooltip.style.border = '1px solid var(--koyn-border)';
                     
                     tooltip.innerHTML = `
                         <strong style="color: var(--koyn-primary-light);">${matchingNews.title}</strong>
@@ -281,12 +261,23 @@
                     
                     // Show/hide tooltip on hover with intelligent positioning
                     span.addEventListener('mouseenter', () => {
-                        // Check if tooltip would be cut off at the top
+                        // Check position for optimal tooltip placement
                         const spanRect = span.getBoundingClientRect();
-                        if (spanRect.top < 300) {
+                        const tooltipHeight = tooltip.offsetHeight || 200; // Estimate if not rendered yet
+                        
+                        // Position based on available space
+                        if (spanRect.top < tooltipHeight + 20) {
                             tooltip.classList.add('bottom');
                         } else {
                             tooltip.classList.remove('bottom');
+                        }
+                        
+                        // Check horizontal position
+                        const viewportWidth = window.innerWidth;
+                        if (spanRect.left < 150) {
+                            tooltip.classList.add('left');
+                        } else if (viewportWidth - spanRect.right < 150) {
+                            tooltip.classList.add('right');
                         }
                         
                         tooltip.style.display = 'block';
@@ -358,6 +349,8 @@
         position: relative;
         cursor: pointer;
         text-decoration: underline;
+        display: inline-block;
+        margin: 0 2px;
     }
     
     .news-tooltip {
@@ -372,6 +365,10 @@
         left: 50%;
         transform: translateX(-50%);
         margin-bottom: 10px;
+        background-color: var(--koyn-bg-panel);
+        color: var(--koyn-text);
+        border: 1px solid var(--koyn-border);
+        text-align: left;
     }
     
     .news-tooltip:after {
@@ -398,38 +395,26 @@
         border-color: transparent transparent var(--koyn-bg-panel) transparent;
     }
     
-    /* News sources legend */
-    .news-sources-legend {
-        margin-top: var(--space-xl);
-        padding-top: var(--space-md);
-        border-top: 1px solid var(--koyn-border);
+    .news-tooltip.left {
+        left: 0;
+        transform: none;
     }
     
-    .news-sources-legend h4 {
-        font-size: 1rem;
-        margin-bottom: var(--space-sm);
+    .news-tooltip.left:after {
+        left: 10px;
+        margin-left: 0;
     }
     
-    .news-sources-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-sm);
-        margin-top: var(--space-sm);
+    .news-tooltip.right {
+        left: auto;
+        right: 0;
+        transform: none;
     }
     
-    .news-source-tag {
-        position: relative;
-        padding: var(--space-xs) var(--space-sm);
-        background-color: var(--koyn-bg-card);
-        border-radius: var(--radius-md);
-        border-left: 3px solid;
-        font-size: 0.875rem;
-        transition: all 0.2s ease;
-    }
-    
-    .news-source-tag:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    .news-tooltip.right:after {
+        left: auto;
+        right: 10px;
+        margin-left: 0;
     }
     
     /* Loading indicator */
@@ -442,30 +427,11 @@
         border-top-color: var(--koyn-primary);
     }
     
-    /* Make sure analysis text has proper styling */
-    #analysisText {
-        color: var(--koyn-text);
-        line-height: 1.6;
-    }
-    
-    #analysisText p {
-        margin-bottom: var(--space-md);
-    }
-    
     /* Container layout adjustments */
     .container {
         display: flex;
         flex-direction: column;
         align-items: center;
-    }
-    
-    /* Media queries for responsive tooltips */
-    @media (max-width: 768px) {
-        .news-tooltip {
-            width: 250px;
-            left: 0;
-            transform: none;
-        }
     }
     </style>
 </body>
