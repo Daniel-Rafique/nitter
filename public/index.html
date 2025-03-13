@@ -70,8 +70,8 @@
                     </div>
                 </div>
                 
-                <div class="chart-container">
-                    <img id="priceChart" src="" alt="Price Chart">
+                <div style="position: relative; height:400px; width:800px">
+                    <canvas id="assetChart"></canvas>
                 </div>
                 
                 <div class="ai-search-summary">
@@ -176,7 +176,8 @@
             }
             
             // Update price chart
-            document.getElementById('priceChart').src = result.price_chart;
+            document.getElementById('assetChart').getContext('2d').clearRect(0, 0, 800, 400);
+            renderChart(result.chart);
             
             // Store news data globally for tooltips
             window.latestNewsData = data.news;
@@ -426,6 +427,11 @@
                     .replace(/"/g, "&quot;")
                     .replace(/'/g, "&#039;")
                 : '';
+        }
+
+        function renderChart(chartData) {
+            const ctx = document.getElementById('assetChart').getContext('2d');
+            new Chart(ctx, chartData);
         }
     });
     </script>
