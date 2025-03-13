@@ -11,7 +11,7 @@ import types, config, prefs, formatters, redis_cache, http_pool, auth
 import views/[general, about]
 import routes/[
   preferences, timeline, status, media, search, rss, list, debug,
-  unsupported, embed, resolver, router_utils, openbb, api]
+  unsupported, embed, resolver, router_utils, openbb]
 
 const instancesUrl = "https://github.com/zedeus/nitter/wiki/Instances"
 const issuesUrl = "https://github.com/zedeus/nitter/issues"
@@ -56,7 +56,6 @@ createEmbedRouter(cfg)
 createRssRouter(cfg)
 createDebugRouter(cfg)
 createOpenBBRouter(cfg)
-createApiRouter(cfg)
 
 settings:
   port = Port(cfg.port)
@@ -117,4 +116,3 @@ routes:
   extend debug, ""
   extend unsupported, ""
   extend openbb, ""
-  extend api, ""
