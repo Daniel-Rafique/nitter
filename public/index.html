@@ -70,7 +70,7 @@
                     </div>
                 </div>
                 
-                <div style="position: relative; height:400px; width:800px">
+                <div class="chart-container">
                     <canvas id="assetChart"></canvas>
                 </div>
                 
@@ -132,7 +132,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ question })
+                body: JSON.stringify({ question: question })
             })
             .then(response => response.json())
             .then(data => {
@@ -431,7 +431,25 @@
 
         function renderChart(chartData) {
             const ctx = document.getElementById('assetChart').getContext('2d');
-            new Chart(ctx, chartData);
+            
+            // Destroy any existing chart
+            if (window.assetPriceChart) {
+                window.assetPriceChart.destroy();
+            }
+            
+            // Create new chart with progressive animation
+            window.assetPriceChart = new Chart(ctx, chartData);
+            
+            // Add hover effects for better user experience
+            const canvas = document.getElementById('assetChart');
+            canvas.style.cursor = 'pointer';
+            
+            // Add responsive behavior
+            window.addEventListener('resize', function() {
+                if (window.assetPriceChart) {
+                    window.assetPriceChart.resize();
+                }
+            });
         }
     });
     </script>
@@ -493,6 +511,27 @@
         padding: var(--space-md);
         border-radius: var(--radius-md);
         margin: var(--space-lg) 0;
+        position: relative;
+        height: 0;
+        padding-bottom: 56.25%; /* 16:9 aspect ratio */
+        width: 100%;
+        overflow: hidden;
+    }
+    
+    .chart-container canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100% !important;
+        height: 100% !important;
+        padding: var(--space-md);
+    }
+    
+    /* Add responsive breakpoints */
+    @media (max-width: 768px) {
+        .chart-container {
+            padding-bottom: 75%; /* Taller on mobile */
+        }
     }
     
     .chart-container img {
