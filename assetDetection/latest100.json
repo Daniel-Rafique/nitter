@@ -1,0 +1,228 @@
+{
+  "fx_pairs": [
+    {
+      "id": "EUR_USD",
+      "name": "Euro / US Dollar",
+      "symbol": "EUR/USD",
+      "base": "EUR",
+      "quote": "USD",
+      "type": "fx"
+    },
+    {
+      "id": "USD_JPY",
+      "name": "US Dollar / Japanese Yen",
+      "symbol": "USD/JPY",
+      "base": "USD",
+      "quote": "JPY",
+      "type": "fx"
+    },
+    {
+      "id": "GBP_USD",
+      "name": "British Pound / US Dollar",
+      "symbol": "GBP/USD",
+      "base": "GBP",
+      "quote": "USD",
+      "type": "fx"
+    },
+    {
+      "id": "USD_CHF",
+      "name": "US Dollar / Swiss Franc",
+      "symbol": "USD/CHF",
+      "base": "USD",
+      "quote": "CHF",
+      "type": "fx"
+    },
+    {
+      "id": "AUD_USD",
+      "name": "Australian Dollar / US Dollar",
+      "symbol": "AUD/USD",
+      "base": "AUD",
+      "quote": "USD",
+      "type": "fx"
+    },
+    {
+      "id": "USD_CAD",
+      "name": "US Dollar / Canadian Dollar",
+      "symbol": "USD/CAD",
+      "base": "USD",
+      "quote": "CAD",
+      "type": "fx"
+    },
+    {
+      "id": "NZD_USD",
+      "name": "New Zealand Dollar / US Dollar",
+      "symbol": "NZD/USD",
+      "base": "NZD",
+      "quote": "USD",
+      "type": "fx"
+    },
+    {
+      "id": "EUR_GBP",
+      "name": "Euro / British Pound",
+      "symbol": "EUR/GBP",
+      "base": "EUR",
+      "quote": "GBP",
+      "type": "fx"
+    },
+    {
+      "id": "EUR_JPY",
+      "name": "Euro / Japanese Yen",
+      "symbol": "EUR/JPY",
+      "base": "EUR",
+      "quote": "JPY",
+      "type": "fx"
+    },
+    {
+      "id": "GBP_JPY",
+      "name": "British Pound / Japanese Yen",
+      "symbol": "GBP/JPY",
+      "base": "GBP",
+      "quote": "JPY",
+      "type": "fx"
+    }
+  ],
+  "indices": [
+    {
+      "id": "SPX",
+      "name": "S&P 500",
+      "symbol": "SPX",
+      "country": "US",
+      "type": "index"
+    },
+    {
+      "id": "DJIA",
+      "name": "Dow Jones Industrial Average",
+      "symbol": "DJIA",
+      "country": "US",
+      "type": "index"
+    },
+    {
+      "id": "COMP",
+      "name": "NASDAQ Composite",
+      "symbol": "COMP",
+      "country": "US",
+      "type": "index"
+    },
+    {
+      "id": "NDX",
+      "name": "NASDAQ-100",
+      "symbol": "NDX",
+      "country": "US",
+      "type": "index"
+    },
+    {
+      "id": "RUT",
+      "name": "Russell 2000",
+      "symbol": "RUT",
+      "country": "US",
+      "type": "index"
+    },
+    {
+      "id": "VIX",
+      "name": "CBOE Volatility Index",
+      "symbol": "VIX",
+      "country": "US",
+      "type": "index"
+    },
+    {
+      "id": "FTSE",
+      "name": "FTSE 100",
+      "symbol": "FTSE",
+      "country": "UK",
+      "type": "index"
+    },
+    {
+      "id": "DAX",
+      "name": "DAX",
+      "symbol": "DAX",
+      "country": "Germany",
+      "type": "index"
+    },
+    {
+      "id": "CAC",
+      "name": "CAC 40",
+      "symbol": "CAC",
+      "country": "France",
+      "type": "index"
+    },
+    {
+      "id": "N225",
+      "name": "Nikkei 225",
+      "symbol": "N225",
+      "country": "Japan",
+      "type": "index"
+    }
+  ],
+  "commodities": [
+    {
+      "id": "GOLD",
+      "name": "Gold",
+      "symbol": "XAU",
+      "category": "Precious Metals",
+      "type": "commodity"
+    },
+    {
+      "id": "SILVER",
+      "name": "Silver",
+      "symbol": "XAG",
+      "category": "Precious Metals",
+      "type": "commodity"
+    },
+    {
+      "id": "PLATINUM",
+      "name": "Platinum",
+      "symbol": "XPT",
+      "category": "Precious Metals",
+      "type": "commodity"
+    },
+    {
+      "id": "CRUDE_OIL_WTI",
+      "name": "Crude Oil WTI",
+      "symbol": "CL",
+      "category": "Energy",
+      "type": "commodity"
+    },
+    {
+      "id": "CRUDE_OIL_BRENT",
+      "name": "Crude Oil Brent",
+      "symbol": "BZ",
+      "category": "Energy",
+      "type": "commodity"
+    },
+    {
+      "id": "NATURAL_GAS",
+      "name": "Natural Gas",
+      "symbol": "NG",
+      "category": "Energy",
+      "type": "commodity"
+    },
+    {
+      "id": "COPPER",
+      "name": "Copper",
+      "symbol": "HG",
+      "category": "Base Metals",
+      "type": "commodity"
+    },
+    {
+      "id": "CORN",
+      "name": "Corn",
+      "symbol": "ZC",
+      "category": "Agriculture",
+      "type": "commodity"
+    },
+    {
+      "id": "WHEAT",
+      "name": "Wheat",
+      "symbol": "ZW",
+      "category": "Agriculture",
+      "type": "commodity"
+    },
+    {
+      "id": "SOYBEANS",
+      "name": "Soybeans",
+      "symbol": "ZS",
+      "category": "Agriculture",
+      "type": "commodity"
+    }
+  ]
+}
