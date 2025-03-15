@@ -2773,7 +2773,7 @@ app.post('/api/profiles', async (req, res) => {
   
     try {
       // Fetch RSS feed with profileId
-      const response = await axios.get(`/${profileId}/rss`);
+      const response = await axios.get(`https://koyn.ai/${profileId}/rss`);
       const parser = new xml2js.Parser({
         explicitArray: false,
         mergeAttrs: true
@@ -2845,7 +2845,7 @@ app.post('/api/profiles', async (req, res) => {
   
       // Fetch RSS feed with search query for each page
       while (currentPage <= pagesToFetch) {
-        const response = await axios.get(`/search/rss`, {
+        const response = await axios.get(`https://koyn.ai/search/rss`, {
           params: {
             f: 'tweets',
             q: query,
