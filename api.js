@@ -11,7 +11,7 @@ const { pipeline, env } = require('@huggingface/transformers');
 const { SentimentIntensityAnalyzer } = require('vader-sentiment');
 
 const app = express();
-const PORT = 3003;
+const PORT = 3001;
 
 // Create models cache directory
 const modelsCacheDir = path.join(__dirname, 'models-cache');
