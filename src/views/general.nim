@@ -33,6 +33,7 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
     tdiv(class="inner-nav"):
       tdiv(class="nav-item"):
         a(href="/"): 
+          img(class="site-logo", src="/logo.jpg", alt="Koyn.ai Logo")
         a(class="site-name", href="/"): text "koyn.ai"
 
       tdiv(class="nav-links"):
@@ -141,16 +142,16 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
 
     title:
       if titleText.len > 0:
-        text titleText & " | Koynlabs"
+        text titleText & " | koyn.ai"
       else:
-        text "Koynlabs Market Insights"
+        text "koyn.ai Market Insights"
 
     meta(name="viewport", content="width=device-width, initial-scale=1.0")
     meta(name="theme-color", content="#1F1F1F")
     meta(property="og:type", content=ogType)
     meta(property="og:title", content=(if ogTitle.len > 0: ogTitle else: titleText))
     meta(property="og:description", content=stripHtml(desc))
-    meta(property="og:site_name", content="Koynlabs")
+    meta(property="og:site_name", content="koyn.ai")
     meta(property="og:locale", content="en_US")
 
     if banner.len > 0 and not banner.startsWith('#'):
