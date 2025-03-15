@@ -33,7 +33,6 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
     tdiv(class="inner-nav"):
       tdiv(class="nav-item"):
         a(href="/"): 
-          img(class="site-logo", src="/logo.jpg", alt="Koynlabs Logo")
         a(class="site-name", href="/"): text "koyn.ai"
 
       tdiv(class="nav-links"):
