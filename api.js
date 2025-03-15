@@ -2132,7 +2132,7 @@ const getTwitterSentiment = async (asset) => {
         console.log(`Fetching sentiment data for: ${queryText}`);
         
         // Use the correct endpoint with proper parameter formatting
-        const response = await axios.post("/api/search", {
+        const response = await axios.post("http://koyn.ai:3001/api/search", {
             query: queryText,
             limit: 50
         });
@@ -2773,7 +2773,7 @@ app.post('/api/profiles', async (req, res) => {
   
     try {
       // Fetch RSS feed with profileId
-      const response = await axios.get(`https://koyn.ai/${profileId}/rss`);
+      const response = await axios.get(`http://koyn.ai/${profileId}/rss`);
       const parser = new xml2js.Parser({
         explicitArray: false,
         mergeAttrs: true
