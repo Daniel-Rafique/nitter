@@ -1697,7 +1697,7 @@ const getFallbackAssetPrice = async (asset) => {
         switch(asset.type) {
             case 'commodity':
                 // Special handling for gold and silver
-                if (asset.symbol === 'XAU' || asset.symbol === 'XAG') {
+                if (['XAU', 'XAG', 'XPT', 'XPD'].includes(asset.symbol)) {
                     // Try Yahoo Finance with forex symbols
                     try {
                         const yahooSymbol = asset.symbol === 'XAU' ? 'XAUUSD=X' : 'XAGUSD=X';
@@ -1770,32 +1770,6 @@ const getFallbackAssetPrice = async (asset) => {
                     console.error(`MarketData API fallback failed for ${asset.name}:`, error.message);
                 }
                 
-                // Try Metals-API for precious metals
-                if (['XAU', 'XAG', 'XPT', 'XPD'].includes(asset.symbol) && process.env.METALS_API_KEY) {
-                    try {
-                        console.log(`Trying Metals-API for ${asset.name}`);
-                        
-                        const metalsResponse = await axios.get('https://metals-api.com/api/latest', {
-                            params: {
-                                access_key: process.env.METALS_API_KEY,
-                                base: 'USD',
-                                symbols: asset.symbol
-                            }
-                        });
-                        
-                        if (metalsResponse.data && metalsResponse.data.success && metalsResponse.data.rates) {
-                            const rate = metalsResponse.data.rates[asset.symbol];
-                            if (rate) {
-                                // Metals-API returns rates as USD per ounce, so we need to invert
-                                const price = 1 / rate;
-                                console.log(`Metals-API returned price for ${asset.name}: $${price}`);
-                                return price.toFixed(2);
-                            }
-                        }
-                    } catch (error) {
-                        console.error(`Metals-API fallback failed for ${asset.name}:`, error.message);
-                    }
-                }
                 break;
                 
             case 'crypto':
@@ -2153,7 +2127,7 @@ const getTwitterSentiment = async (asset) => {
         console.log(`Fetching sentiment data for: ${queryText}`);
         
         // Use the correct endpoint with proper parameter formatting
-        const response = await axios.post("https://api.koynlabs.com:3003/api/search", {
+        const response = await axios.post("https://koyn.ai:3001/api/search", {
             query: queryText,
             limit: 50
         });
@@ -2493,19 +2467,6 @@ const analyzeSentiment = async (tweets) => {
     return simpleRuleBasedSentiment(combinedText);
 };
 
-// Function to dispose of the model and free up memory
-const disposeSentimentModel = async () => {
-    if (sentimentClassifier) {
-        try {
-            await sentimentClassifier.dispose();
-            sentimentClassifier = null;
-            console.log("Sentiment analysis model disposed");
-        } catch (error) {
-            console.error("Error disposing sentiment model:", error);
-        }
-    }
-};
-
 // Pre-download the model during server startup
 (async () => {
   try {
@@ -2807,7 +2768,7 @@ app.post('/api/profiles', async (req, res) => {
   
     try {
       // Fetch RSS feed with profileId
-      const response = await axios.get(`https://koyn.ai/${profileId}/rss`);
+      const response = await axios.get(`/${profileId}/rss`);
       const parser = new xml2js.Parser({
         explicitArray: false,
         mergeAttrs: true
@@ -2879,7 +2840,7 @@ app.post('/api/profiles', async (req, res) => {
   
       // Fetch RSS feed with search query for each page
       while (currentPage <= pagesToFetch) {
-        const response = await axios.get(`https://koyn.ai/search/rss`, {
+        const response = await axios.get(`/search/rss`, {
           params: {
             f: 'tweets',
             q: query,
@@ -2927,7 +2888,7 @@ app.post('/api/profiles', async (req, res) => {
         data: {
           metadata: {
             title: `Search results for "${query}"`,
-            link: `https://koyn.ai/search?q=${encodeURIComponent(query)}`,
+            link: `/search?q=${encodeURIComponent(query)}`,
             description: `Search results for "${query}"`,
             language: "en-us"
           },
