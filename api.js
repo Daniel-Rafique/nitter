@@ -1760,7 +1760,12 @@ const getFallbackAssetPrice = async (asset) => {
                     console.log(`Trying MarketData API for ${asset.name}`);
                     const marketDataSymbol = getCommodityTickerForMarketData(asset.symbol);
                     
-                    const marketDataResponse = await axios.get(`https://api.marketdata.app/v1/commodities/${marketDataSymbol}/quote`);
+                    const marketDataResponse = await axios.get(`https://api.marketdata.app/v1/commodities/${marketDataSymbol}/quote`, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'Authorization': `Bearer ${process.env.MARKET_DATA_API_TOKEN}`
+                        }
+                    });
                     
                     if (marketDataResponse.data && marketDataResponse.data.c) {
                         console.log(`MarketData API returned price for ${asset.name}: $${marketDataResponse.data.c}`);
@@ -2127,7 +2132,7 @@ const getTwitterSentiment = async (asset) => {
         console.log(`Fetching sentiment data for: ${queryText}`);
         
         // Use the correct endpoint with proper parameter formatting
-        const response = await axios.post("https://koyn.ai:3001/api/search", {
+        const response = await axios.post("/api/search", {
             query: queryText,
             limit: 50
         });
