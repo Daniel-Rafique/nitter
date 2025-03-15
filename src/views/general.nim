@@ -34,7 +34,7 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
       tdiv(class="nav-item"):
         a(href="/"): 
           img(class="site-logo", src="/logo.jpg", alt="Koynlabs Logo")
-        a(class="site-name", href="/"): text "Koynlabs"
+        a(class="site-name", href="/"): text "koyn.ai"
 
       tdiv(class="nav-links"):
         a(href="/search?q=Bitcoin", class="nav-link"): text "Bitcoin"
