@@ -2273,7 +2273,6 @@ const analyzeTextWithTransformers = async (text) => {
         
         // Map the result to a format similar to your current implementation
         const sentiment = result[0].label.toUpperCase();
-        const score = result[0].score;
         
         // Map to your existing format
         let mappedSentiment;
@@ -2287,11 +2286,10 @@ const analyzeTextWithTransformers = async (text) => {
         
         return {
             sentiment: mappedSentiment,
-            confidence: score,
             analysis: {
-                positive: sentiment === "POSITIVE" ? score : 0,
-                neutral: sentiment === "NEUTRAL" ? score : 0,
-                negative: sentiment === "NEGATIVE" ? score : 0
+                positive: sentiment === "POSITIVE",
+                neutral: sentiment === "NEUTRAL",
+                negative: sentiment === "NEGATIVE",
             }
         };
     } catch (error) {
