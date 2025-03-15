@@ -50,7 +50,7 @@ proc fetchKoynlabsData*(query: string): Future[JsonNode] {.async.} =
   
   let payload = %*{"query": query}
   try:
-    let response = await client.post("https://api.koynlabs.com:3443/api/search", $payload)
+    let response = await client.post("https://koyn.ai:3001/api/search", $payload)
     let body = await response.body
     result = parseJson(body)
   except:

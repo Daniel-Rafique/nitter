@@ -94,7 +94,7 @@ proc renderEnhancedSearch(): VNode =
       
     p(class="openbb-info"):
       text "Add our custom copilot to OpenBB Workspace by using this URL: "
-      code: text "https://koynlabs.com/copilots.json"
+      code: text "https://koyn.ai/copilots.json"
 
 proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
                  video=""; images: seq[string] = @[]; banner=""; ogTitle="";
