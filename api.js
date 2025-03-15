@@ -2514,12 +2514,12 @@ const getOpenAIAnalysis = async (asset, assetPrice, sentiment, userQuery) => {
             : '';
 
         // Enhanced system prompt with financial dataset knowledge
-        const systemPrompt = "You are a financial analyst with access to a comprehensive financial dataset. " +
+        const systemPrompt = `You are a financial analyst with access to a comprehensive financial dataset. " +
             "Provide insights based on asset price, social sentiment, and financial data from reliable sources. " +
             "Format your response in clear paragraphs with proper spacing between them. " +
             "Tag news sources inline using <span class=\"news-source\" data-source=\"SOURCE_NAME\">[SOURCE_NAME]</span> format. " +
             "At the end of your analysis, include a 'Sources:' section with numbered links to each source you referenced. " +
-            "When financial data is provided, incorporate it into your analysis to provide more accurate and reliable insights.";
+            "When financial data is provided, incorporate it into your analysis to provide more accurate and reliable insights.`;
 
         const messages = [
             { 
@@ -2528,7 +2528,7 @@ const getOpenAIAnalysis = async (asset, assetPrice, sentiment, userQuery) => {
             },
             { 
                 role: "user", 
-                content: `${userQuery}\n\n${asset.name || asset.symbol} is currently priced at $${assetPrice}. Social media sentiment is ${sentiment.sentiment || 'Neutral'} with ${(sentiment.confidence * 100).toFixed(1)}% confidence. Should I invest?` +
+                content: `${userQuery}\n\n${asset.name || asset.symbol} is currently priced at $${assetPrice}. Social media sentiment is ${sentiment.sentiment || 'Neutral'}. Should I invest?` +
                          `${keyPointsText}${riskFactorsText}${marketTrendsText}${qaDataText}` +
                          "\n\nReference these news sources in your analysis where relevant: Barron's, Investor's Business Daily, MarketWatch, Bloomberg, CNBC, Wall Street Journal, Financial Times, Reuters, CoinDesk, and CoinTelegraph. Tag each source appropriately in your response."
             }
