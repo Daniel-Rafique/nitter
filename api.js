@@ -166,7 +166,7 @@ const fetchAndSaveCryptoData = async () => {
         'X-CMC_PRO_API_KEY': process.env.COINMARKETCAP_API_KEY
       },
       params: {
-        limit: 100, // Get top 100 cryptocurrencies
+        limit: 1000, // Get top 100 cryptocurrencies
         sort: 'market_cap',
         sort_dir: 'desc'
       }
@@ -225,7 +225,7 @@ const loadCryptoData = async () => {
               'X-CMC_PRO_API_KEY': process.env.COINMARKETCAP_API_KEY
             },
             params: {
-              limit: 100,
+              limit: 1000,
               sort: 'market_cap',
               sort_dir: 'desc'
             }
